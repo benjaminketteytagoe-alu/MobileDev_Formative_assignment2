@@ -26,8 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider).valueOrNull;
-    final hasStaffRole =
-        authState?.isStaff == true || authState?.needsStaffVerification == true;
+    final hasStaffRole = authState?.isStaff == true;
 
     final tabs = <Widget>[
       const IncidentFeedScreen(),

@@ -3,8 +3,9 @@ import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from '@firebase/rules-unit-testing';
 import {
-  doc, setDoc, getDoc, deleteDoc, updateDoc, writeBatch, runTransaction, collection, Timestamp,
+  doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, writeBatch, runTransaction, collection, Timestamp,
 } from 'firebase/firestore';
+import { ref, uploadBytes, getBytes, deleteObject } from 'firebase/storage';
 
 // Security-rule tests for firestore.rules. Run from student_support/:
 //   cd rules_test && npm install && npm test
@@ -12,15 +13,23 @@ import {
 // deployed) and runs this file against it.
 const rulesPath = new URL('../firestore.rules', import.meta.url);
 const rules = readFileSync(rulesPath, 'utf8');
+const storageRules = readFileSync(new URL('../storage.rules', import.meta.url), 'utf8');
 const env = await initializeTestEnvironment({
   projectId: 'demo-campussupport',
   firestore: { rules },
+  storage: { rules: storageRules, host: '127.0.0.1', port: 9199 },
 });
 
 const now = () => Timestamp.now();
-const student = env.authenticatedContext('stu', { email: 'stu@alustudent.com', email_verified: false }).firestore();
-const other = env.authenticatedContext('oth', { email: 'oth@alustudent.com', email_verified: false }).firestore();
-const staff = env.authenticatedContext('stf', { email: 'stf@alueducation.com', email_verified: true }).firestore();
+const studentCtx = env.authenticatedContext('stu', { email: 'stu@alustudent.com', email_verified: true });
+const staffCtx = env.authenticatedContext('stf', { email: 'stf@alueducation.com', email_verified: true });
+const unverifiedCtx = env.authenticatedContext('unv', { email: 'unv@alustudent.com', email_verified: false });
+const outsiderCtx = env.authenticatedContext('out', { email: 'out@gmail.com', email_verified: true });
+const student = studentCtx.firestore();
+const other = env.authenticatedContext('oth', { email: 'oth@alustudent.com', email_verified: true }).firestore();
+const staff = staffCtx.firestore();
+const unverified = unverifiedCtx.firestore();
+const outsider = outsiderCtx.firestore();
 
 const incident = (reporterId) => ({
   title: 'Leaking tap', description: 'Water everywhere', category: 'water',
@@ -122,6 +131,96 @@ await check('staff cannot skip to resolved',
   assertFails(updateDoc(doc(staff, 'incidents/theirs'), { status: 'resolved', updatedAt: now() })));
 await check('notification from staff',
   assertSucceeds(setDoc(doc(staff, 'notifications/n1'), { userId: 'oth', message: 'Your report "Leaking tap" is now In Review.', incidentId: 'theirs', read: false, at: now() })));
+
+// 5. Only verified ALU accounts get in
+await check('an unverified ALU account cannot read reports',
+  assertFails(getDoc(doc(unverified, 'incidents/theirs'))));
+await check('an unverified ALU account cannot file a report',
+  assertFails(setDoc(doc(collection(unverified, 'incidents')), incident('unv'))));
+await check('an outside account cannot read reports, even when verified',
+  assertFails(getDoc(doc(outsider, 'incidents/theirs'))));
+await check('an outside account cannot file a report',
+  assertFails(setDoc(doc(collection(outsider, 'incidents')), incident('out'))));
+await check('an unverified user cannot read someone else\'s profile',
+  assertFails(getDoc(doc(unverified, 'users/stu'))));
+await check('an unverified user can create their own profile',
+  assertSucceeds(setDoc(doc(unverified, 'users/unv'), { name: 'Unv', email: 'unv@alustudent.com', role: 'student', reportsSubmitted: 0, createdAt: now() })));
+await check('unverified staff cannot change a status',
+  assertFails(updateDoc(doc(env.authenticatedContext('stf', { email: 'stf@alueducation.com', email_verified: false }).firestore(), 'incidents/theirs'), { status: 'in_progress', updatedAt: now() })));
+
+// 6. Anonymous reports
+await check('an anonymous report with the placeholder name is accepted',
+  assertSucceeds(setDoc(doc(student, 'incidents/anon'), { ...incident('stu'), anonymous: true, reporterName: 'Anonymous student' })));
+await check('an anonymous report cannot store a real name',
+  assertFails(setDoc(doc(collection(student, 'incidents')), { ...incident('stu'), anonymous: true })));
+await check('anonymous must be true or false',
+  assertFails(setDoc(doc(collection(student, 'incidents')), { ...incident('stu'), anonymous: 'yes' })));
+
+// 7. Flags
+const flag = (uid) => ({ uid, at: now() });
+await check('a member flags a report once in their own name',
+  assertSucceeds(setDoc(doc(student, 'incidents/theirs/flags/stu'), flag('stu'))));
+await check('a flag cannot be written in someone else\'s name',
+  assertFails(setDoc(doc(student, 'incidents/theirs/flags/x'), flag('x'))));
+await check('a reporter cannot flag their own report',
+  assertFails(setDoc(doc(other, 'incidents/theirs/flags/oth'), flag('oth'))));
+await check('a flag cannot be changed',
+  assertFails(setDoc(doc(student, 'incidents/theirs/flags/stu'), { uid: 'stu', at: now(), extra: 1 })));
+await check('a user can see their own flag',
+  assertSucceeds(getDoc(doc(student, 'incidents/theirs/flags/stu'))));
+await check('other students cannot list who flagged',
+  assertFails(getDocs(collection(other, 'incidents/theirs/flags'))));
+await check('staff can list flags',
+  assertSucceeds(getDocs(collection(staff, 'incidents/theirs/flags'))));
+
+// 8. Deleting a report removes its sub-collections, and only then
+await env.withSecurityRulesDisabled(async (ctx) => {
+  const db = ctx.firestore();
+  await setDoc(doc(db, 'incidents/del'), incident('stu'));
+  await setDoc(doc(db, 'incidents/del/history/h1'), history('', 'submitted', 'stu', 'Stu'));
+  await setDoc(doc(db, 'incidents/del/votes/oth'), { uid: 'oth', at: now() });
+  await setDoc(doc(db, 'incidents/del/flags/oth'), flag('oth'));
+  await setDoc(doc(db, 'incidents/del2'), incident('stu'));
+  await setDoc(doc(db, 'incidents/del2/history/h1'), history('', 'submitted', 'stu', 'Stu'));
+  await setDoc(doc(db, 'incidents/del2/votes/oth'), { uid: 'oth', at: now() });
+});
+await check('a history entry still cannot be deleted alone',
+  assertFails(deleteDoc(doc(staff, 'incidents/del/history/h1'))));
+await check('someone else\'s vote cannot be deleted alone',
+  assertFails(deleteDoc(doc(student, 'incidents/del/votes/oth'))));
+{
+  const b = writeBatch(staff);
+  for (const p of ['history/h1', 'votes/oth', 'flags/oth']) b.delete(doc(staff, `incidents/del/${p}`));
+  b.delete(doc(staff, 'incidents/del'));
+  await check('staff delete a report with its history, votes and flags in one batch', assertSucceeds(b.commit()));
+}
+{
+  const b = writeBatch(student);
+  for (const p of ['history/h1', 'votes/oth']) b.delete(doc(student, `incidents/del2/${p}`));
+  b.delete(doc(student, 'incidents/del2'));
+  await check('an owner deletes a Submitted report with its history and votes', assertSucceeds(b.commit()));
+}
+
+// 9. Storage rules
+const image = new Uint8Array([255, 216, 255, 217]);
+const jpeg = { contentType: 'image/jpeg' };
+const photo = (ctx, path) => ref(ctx.storage(), path);
+await check('a verified student uploads to their own folder',
+  assertSucceeds(uploadBytes(photo(studentCtx, 'incidents/stu/a.jpg'), image, jpeg)));
+await check('a verified member reads a photo',
+  assertSucceeds(getBytes(photo(staffCtx, 'incidents/stu/a.jpg'))));
+await check('nobody uploads into another user\'s folder',
+  assertFails(uploadBytes(photo(studentCtx, 'incidents/oth/a.jpg'), image, jpeg)));
+await check('an unverified account cannot upload',
+  assertFails(uploadBytes(photo(unverifiedCtx, 'incidents/unv/a.jpg'), image, jpeg)));
+await check('an outside account cannot read photos',
+  assertFails(getBytes(photo(outsiderCtx, 'incidents/stu/a.jpg'))));
+await check('non-image uploads are rejected',
+  assertFails(uploadBytes(photo(studentCtx, 'incidents/stu/a.pdf'), image, { contentType: 'application/pdf' })));
+await check('files of 5 MB or more are rejected',
+  assertFails(uploadBytes(photo(studentCtx, 'incidents/stu/big.jpg'), new Uint8Array(5 * 1024 * 1024), jpeg)));
+await check('staff can delete a student\'s photo',
+  assertSucceeds(deleteObject(photo(staffCtx, 'incidents/stu/a.jpg'))));
 
 await env.cleanup();
 console.log(`\n${pass} passed, ${fail} failed`);

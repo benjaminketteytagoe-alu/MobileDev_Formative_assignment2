@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/alu_email.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 enum UserRole { student, staff }
@@ -52,10 +53,7 @@ class UserModel {
 
   /// Detects role from email domain
   static UserRole _detectRoleFromEmail(String email) {
-    final lower = email.toLowerCase();
-    if (lower.endsWith('@alueducation.com')) return UserRole.staff;
-    if (lower.endsWith('@alustudent.com')) return UserRole.student;
-    return UserRole.student;
+    return AluEmail.isStaff(email) ? UserRole.staff : UserRole.student;
   }
 
   /// Creates a UserModel from a Firebase Auth User (fallback when Firestore is unavailable)

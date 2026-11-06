@@ -26,6 +26,14 @@ service cloud.firestore {
       return tokenEmail().matches('.*@alustudent[.]com');
     }
 
+    // A verified ALU account. Everything except a user's own profile needs
+    // this, so an outside or unconfirmed account can read nothing.
+    function isMember() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && (hasStudentEmail() || hasStaffEmail());
+    }
+
     function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
@@ -96,12 +104,12 @@ service cloud.firestore {
       // An unsent report the user chose to keep. Private to its owner.
       // Photo paths point at files on the owner's phone, not at Storage.
       match /drafts/{draftId} {
-        allow read, delete: if signedIn() && request.auth.uid == uid;
-        allow create, update: if signedIn()
+        allow read, delete: if isMember() && request.auth.uid == uid;
+        allow create, update: if isMember()
           && request.auth.uid == uid
           && request.resource.data.keys().hasOnly([
                'title', 'description', 'category', 'sector', 'locationDetail',
-               'urgency', 'localImagePaths', 'updatedAt'
+               'urgency', 'anonymous', 'localImagePaths', 'updatedAt'
              ])
           && request.resource.data.title is string
           && request.resource.data.title.size() <= 120
@@ -117,17 +125,31 @@ service cloud.firestore {
 
     // ------------------------------------------------------------ incidents
     match /incidents/{incidentId} {
-      allow read: if signedIn();
+      allow read: if isMember();
 
-      // Any signed-in user can file a report in their own name. New reports
+      // True when this write also deletes the report. Sub-collections can only
+      // be removed this way, so history stays append-only otherwise.
+      function reportBeingDeleted() {
+        return !existsAfter(/databases/$(database)/documents/incidents/$(incidentId));
+      }
+
+      // An anonymous report must store the placeholder, not a real name.
+      function validReporterName(data) {
+        return data.get('anonymous', false) is bool
+          && (data.get('anonymous', false) == false
+              || data.reporterName == 'Anonymous student');
+      }
+
+      // Any verified member can file a report in their own name. New reports
       // always start as "submitted".
-      allow create: if signedIn()
+      allow create: if isMember()
         && request.resource.data.keys().hasOnly([
              'title', 'description', 'category', 'location', 'sector', 'urgency', 'status',
-             'reporterId', 'reporterName', 'images', 'searchKeywords', 'upvoteCount',
-             'createdAt', 'updatedAt'
+             'reporterId', 'reporterName', 'anonymous', 'images', 'searchKeywords',
+             'upvoteCount', 'createdAt', 'updatedAt'
            ])
         && request.resource.data.reporterId == request.auth.uid
+        && validReporterName(request.resource.data)
         && request.resource.data.status == 'submitted'
         && nonEmptyString(request.resource.data.title, 120)
         && nonEmptyString(request.resource.data.description, 2000)
@@ -144,7 +166,7 @@ service cloud.firestore {
       // Owner can edit their own report only while status is "submitted".
       // They cannot change status, reporterId, reporterName, or images.
       function ownerEdit() {
-        return signedIn()
+        return isMember()
           && request.auth.uid == resource.data.reporterId
           && resource.data.status == 'submitted'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -179,12 +201,12 @@ service cloud.firestore {
           && nonEmptyString(request.resource.data.assignedToName, 100);
       }
 
-      // Any signed-in user can move upvoteCount by exactly one, and only in
+      // Any verified member can move upvoteCount by exactly one, and only in
       // the same transaction that creates or deletes their own vote document.
       function voteCountUpdate() {
         let voteDoc = /databases/$(database)/documents/incidents/$(incidentId)/votes/$(request.auth.uid);
         let delta = request.resource.data.upvoteCount - resource.data.upvoteCount;
-        return signedIn()
+        return isMember()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvoteCount'])
           && request.resource.data.upvoteCount is int
           && (
@@ -197,17 +219,17 @@ service cloud.firestore {
 
       // Owner can delete only when status is "submitted", or staff can delete.
       allow delete: if isStaff()
-        || (signedIn()
+        || (isMember()
             && request.auth.uid == resource.data.reporterId
             && resource.data.status == 'submitted');
 
       // -------------------------------------------------------- history
       match /history/{entryId} {
-        allow read: if signedIn();
+        allow read: if isMember();
         // Staff record status changes. The reporter may write only the first
         // "submitted" entry, in the same batch that creates the report
         // (getAfter sees the report as it will be once the batch commits).
-        allow create: if signedIn()
+        allow create: if isMember()
           && request.resource.data.keys().hasOnly([
                'fromStatus', 'toStatus', 'byUid', 'byName', 'note', 'at'
              ])
@@ -222,21 +244,37 @@ service cloud.firestore {
                 && getAfter(/databases/$(database)/documents/incidents/$(incidentId)).data.reporterId == request.auth.uid)
           );
         allow update: if false;
-        allow delete: if false;
+        allow delete: if isMember() && reportBeingDeleted();
       }
 
       // ---------------------------------------------------------- votes
       match /votes/{voterUid} {
-        allow read: if signedIn();
+        allow read: if isMember();
         // A user can create only their own vote document.
-        allow create: if signedIn()
+        allow create: if isMember()
           && request.auth.uid == voterUid
           && request.resource.data.keys().hasOnly(['uid', 'at'])
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.at is timestamp;
-        // A user can delete only their own vote.
-        allow delete: if signedIn() && request.auth.uid == voterUid;
+        // A user can delete only their own vote, unless the report is going.
+        allow delete: if isMember()
+          && (request.auth.uid == voterUid || reportBeingDeleted());
         allow update: if false;
+      }
+
+      // ---------------------------------------------------------- flags
+      // One "false or abusive" flag per person. Flaggers stay private: only
+      // staff can see them, and a user can see their own.
+      match /flags/{flaggerUid} {
+        allow read: if isStaff() || (isMember() && request.auth.uid == flaggerUid);
+        allow create: if isMember()
+          && request.auth.uid == flaggerUid
+          && request.auth.uid != get(/databases/$(database)/documents/incidents/$(incidentId)).data.reporterId
+          && request.resource.data.keys().hasOnly(['uid', 'at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.at is timestamp;
+        allow update: if false;
+        allow delete: if isStaff() && reportBeingDeleted();
       }
     }
 

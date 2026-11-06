@@ -10,7 +10,6 @@ import 'package:student_support/core/widgets/empty_state_widget.dart';
 import 'package:student_support/core/widgets/incident_list_view.dart';
 import 'package:student_support/core/widgets/motion.dart';
 import 'package:student_support/core/widgets/skeleton_loader.dart';
-import 'package:student_support/core/widgets/staff_verification_notice.dart';
 import 'package:student_support/models/incident_model.dart';
 import 'package:student_support/providers/auth_provider.dart';
 import 'package:student_support/providers/filter_provider.dart';
@@ -33,13 +32,11 @@ class StaffDashboardScreen extends ConsumerWidget {
     if (auth == null || !auth.isStaff) {
       return Scaffold(
         appBar: const CustomAppBar(title: 'Staff Dashboard', showSignOut: true),
-        body: auth?.needsStaffVerification == true
-            ? const Column(children: [StaffVerificationNotice()])
-            : const EmptyStateWidget(
-                icon: Icons.lock_outline,
-                title: 'Staff access only',
-                message: 'This area is available to verified campus staff.',
-              ),
+        body: const EmptyStateWidget(
+          icon: Icons.lock_outline,
+          title: 'Staff access only',
+          message: 'This area is available to verified campus staff.',
+        ),
       );
     }
 

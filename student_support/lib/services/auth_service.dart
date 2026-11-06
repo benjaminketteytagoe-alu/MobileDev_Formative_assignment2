@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../core/alu_email.dart';
 import '../firebase_options.dart';
 import '../models/user_model.dart';
 import '../utils/error_messages.dart';
@@ -11,13 +12,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static const String studentDomain = '@alustudent.com';
-  static const String staffDomain = '@alueducation.com';
-
   /// OAuth "Web client" from google-services.json (client_type 3). Android
   /// needs it to get an ID token that Firebase accepts.
   static const String googleServerClientId =
       '631219479011-v1fd4hvu3qimuoqkua3mme6gpikt204m.apps.googleusercontent.com';
+
+  static const String _googleAccountMessage =
+      'Use your ${AluEmail.studentDomain} or ${AluEmail.staffDomain} Google account.';
 
   bool _googleReady = false;
 
@@ -35,9 +36,8 @@ class AuthService {
   /// Returns the role that matches the email domain, or null for any other
   /// domain. Accounts outside the two university domains are not allowed.
   static UserRole? roleForEmail(String email) {
-    final lower = email.trim().toLowerCase();
-    if (lower.endsWith(staffDomain)) return UserRole.staff;
-    if (lower.endsWith(studentDomain)) return UserRole.student;
+    if (AluEmail.isStaff(email)) return UserRole.staff;
+    if (AluEmail.isStudent(email)) return UserRole.student;
     return null;
   }
 
@@ -49,9 +49,7 @@ class AuthService {
     final normalisedEmail = email.trim().toLowerCase();
     final role = roleForEmail(normalisedEmail);
     if (role == null) {
-      throw const AppException(
-        'Use your @alustudent.com or @alueducation.com email address.',
-      );
+      throw const AppException('${AluEmail.requirement} address.');
     }
 
     final credential = await _auth.createUserWithEmailAndPassword(
@@ -78,9 +76,7 @@ class AuthService {
     // provider re-read the profile document that now exists.
     await firebaseUser.updateDisplayName(user.name);
 
-    if (role == UserRole.staff) {
-      await _sendVerificationQuietly(firebaseUser);
-    }
+    await _sendVerificationQuietly(firebaseUser);
 
     return credential;
   }
@@ -119,9 +115,7 @@ class AuthService {
     // created for an outside address.
     if (roleForEmail(account.email) == null) {
       await _signOutGoogleQuietly();
-      throw const AppException(
-        'Use your @alustudent.com or @alueducation.com Google account.',
-      );
+      throw const AppException(_googleAccountMessage);
     }
 
     final idToken = account.authentication.idToken;
@@ -139,9 +133,7 @@ class AuthService {
     if (roleForEmail(user.email ?? '') == null) {
       // Web popups cannot be filtered up front, so reject here instead.
       await logout();
-      throw const AppException(
-        'Use your @alustudent.com or @alueducation.com Google account.',
-      );
+      throw const AppException(_googleAccountMessage);
     }
     await _ensureUserDocument(user);
     return credential;

@@ -38,6 +38,7 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
   String _selectedSector = '';
   String _selectedUrgency = 'medium';
   List<String> _imagePaths = [];
+  bool _anonymous = false;
 
   bool _isLoading = false;
   String? _error;
@@ -67,6 +68,7 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
     category: _selectedCategory,
     sector: _selectedSector,
     locationDetail: _locationController.text.trim(),
+    anonymous: _anonymous,
     urgency: _selectedUrgency,
     localImagePaths: _imagePaths,
   );
@@ -92,6 +94,7 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
       _selectedCategory = draft.category;
       _selectedSector = draft.sector;
       _selectedUrgency = draft.urgency;
+      _anonymous = draft.anonymous;
       _imagePaths = photos;
     });
 
@@ -115,6 +118,7 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
       _imagePaths = [];
       _error = null;
       _sectorError = null;
+      _anonymous = false;
     });
     ref.read(incidentControllerProvider).clearDraft();
   }
@@ -149,6 +153,7 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
             ),
             urgency: _selectedUrgency,
             imagePaths: _imagePaths,
+            anonymous: _anonymous,
           );
 
       messenger.showSnackBar(
@@ -341,6 +346,20 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
                       onChanged: (paths) =>
                           setState(() => _imagePaths = paths),
                     ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile.adaptive(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    title: const Text('Report anonymously'),
+                    subtitle: const Text(
+                      'Your name and avatar stay hidden in the app. Your '
+                      'account stays linked so staff can act on misuse.',
+                    ),
+                    value: _anonymous,
+                    onChanged: (value) => setState(() => _anonymous = value),
                   ),
 
                   if (_error != null) ...[

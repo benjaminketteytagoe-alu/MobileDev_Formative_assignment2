@@ -47,7 +47,9 @@ class _IncidentListViewState extends State<IncidentListView> {
       imageUrl: incident.images.isNotEmpty ? incident.images.first : null,
       timestamp: IncidentLabels.relativeDate(incident.createdAt),
       upvoteCount: incident.upvoteCount,
-      reporterId: incident.reporterId,
+      // No avatar on anonymous reports: it is drawn from the user ID, so it
+      // would match the reporter's named reports.
+      reporterId: incident.anonymous ? '' : incident.reporterId,
       reporterName: incident.reporterName,
       onTap: () => Navigator.of(
         context,

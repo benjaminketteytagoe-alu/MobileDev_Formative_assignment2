@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_assets.dart';
+import 'core/firebase_emulators.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'navigation/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/verify_email_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/splash/splash_screen.dart';
 
@@ -28,6 +30,7 @@ void main() async {
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     AppAssets.load(),
   ]);
+  await connectStorageEmulator();
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -89,10 +92,14 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     if (!_splashDone || !(authState.hasValue || authState.hasError)) {
       child = const SplashScreen(key: ValueKey('splash'));
     } else {
-      final signedIn = authState.valueOrNull?.isAuthenticated ?? false;
-      child = signedIn
-          ? const HomeScreen(key: ValueKey('home'))
-          : const LoginScreen(key: ValueKey('login'));
+      final auth = authState.valueOrNull;
+      if (auth?.isAuthenticated != true) {
+        child = const LoginScreen(key: ValueKey('login'));
+      } else if (auth!.needsEmailVerification) {
+        child = const VerifyEmailScreen(key: ValueKey('verify'));
+      } else {
+        child = const HomeScreen(key: ValueKey('home'));
+      }
     }
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 450),

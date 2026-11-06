@@ -51,3 +51,6 @@ app.*.map.json
 firepit-log.txt
 firebase-debug.log
 .firebase/
+
+# Photos stored by the local Storage emulator
+.emulator-data/

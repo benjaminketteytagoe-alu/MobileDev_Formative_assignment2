@@ -6,6 +6,7 @@ import 'package:student_support/core/theme/app_radius.dart';
 import 'package:student_support/core/theme/app_spacing.dart';
 import 'package:student_support/core/widgets/user_avatar.dart';
 import 'package:student_support/models/history_entry_model.dart';
+import 'package:student_support/models/incident_model.dart';
 import 'package:student_support/providers/incident_provider.dart';
 import 'package:student_support/utils/incident_labels.dart';
 
@@ -106,8 +107,10 @@ class _HistoryEntryCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
-                UserAvatar(userId: entry.byUid, name: entry.byName, size: 20),
-                const SizedBox(width: AppSpacing.xs),
+                if (entry.byName != IncidentModel.anonymousName) ...[
+                  UserAvatar(userId: entry.byUid, name: entry.byName, size: 20),
+                  const SizedBox(width: AppSpacing.xs),
+                ],
                 Expanded(
                   child: Text(
                     'By ${entry.byName}',

@@ -10,6 +10,7 @@ class ReportDraftModel {
   /// One of IncidentModel.sectors, or '' if none was picked yet.
   final String sector;
   final String locationDetail;
+  final bool anonymous;
   final String urgency;
 
   /// Paths of photos on this phone. They are not uploaded until the report
@@ -23,6 +24,7 @@ class ReportDraftModel {
     this.category = 'facility',
     this.sector = '',
     this.locationDetail = '',
+    this.anonymous = false,
     this.urgency = 'medium',
     this.localImagePaths = const [],
     DateTime? updatedAt,
@@ -43,6 +45,7 @@ class ReportDraftModel {
       category: json['category'] as String? ?? 'facility',
       sector: json['sector'] as String? ?? '',
       locationDetail: json['locationDetail'] as String? ?? '',
+      anonymous: json['anonymous'] as bool? ?? false,
       urgency: json['urgency'] as String? ?? 'medium',
       localImagePaths: List<String>.from(json['localImagePaths'] ?? []),
       updatedAt: (json['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -56,6 +59,7 @@ class ReportDraftModel {
       'category': category,
       'sector': sector,
       'locationDetail': locationDetail,
+      'anonymous': anonymous,
       'urgency': urgency,
       'localImagePaths': localImagePaths,
       'updatedAt': Timestamp.fromDate(updatedAt),

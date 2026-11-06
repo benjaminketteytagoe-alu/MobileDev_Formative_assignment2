@@ -197,10 +197,55 @@ class IncidentService {
     });
   }
 
-  /// Deletes an incident (owner when submitted, or staff).
-  Future<void> deleteIncident(String incidentId) async {
-    // Delete associated images from Storage is handled by the caller
-    await _incidents.doc(incidentId).delete();
+  /// Deletes a report with its history and votes in one batch. The rules only
+  /// allow those to go in the same batch as the report, so the history stays
+  /// append-only otherwise. Flags are readable by staff alone, so [withFlags]
+  /// is for staff; a flag left by an owner's delete stays as a record of the
+  /// complaint. Photos are removed by the caller.
+  Future<void> deleteIncident(
+    String incidentId, {
+    bool withFlags = false,
+  }) async {
+    final report = _incidents.doc(incidentId);
+    final batch = _firestore.batch();
+    for (final name in ['history', 'votes', if (withFlags) 'flags']) {
+      final docs = await report.collection(name).get();
+      for (final doc in docs.docs) {
+        batch.delete(doc.reference);
+      }
+    }
+    batch.delete(report);
+    await batch.commit();
+  }
+
+  /// Records that [uid] flagged a report as false or abusive.
+  Future<void> flagIncident({
+    required String incidentId,
+    required String uid,
+  }) async {
+    await _incidents.doc(incidentId).collection('flags').doc(uid).set({
+      'uid': uid,
+      'at': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Whether [uid] has flagged a report.
+  Stream<bool> hasFlagged({required String incidentId, required String uid}) {
+    return _incidents
+        .doc(incidentId)
+        .collection('flags')
+        .doc(uid)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
+
+  /// Number of people who flagged a report. Staff only.
+  Stream<int> getFlagCount(String incidentId) {
+    return _incidents
+        .doc(incidentId)
+        .collection('flags')
+        .snapshots()
+        .map((snapshot) => snapshot.size);
   }
 
   /// Assigns a report to a staff member.

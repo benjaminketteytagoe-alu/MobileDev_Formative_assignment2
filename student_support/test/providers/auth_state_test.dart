@@ -14,7 +14,7 @@ void main() {
         emailVerified: true,
       );
       expect(state.isStaff, isTrue);
-      expect(state.needsStaffVerification, isFalse);
+      expect(state.needsEmailVerification, isFalse);
     });
 
     test('an unverified staff account is not staff yet', () {
@@ -23,7 +23,7 @@ void main() {
         user: user(UserRole.staff),
       );
       expect(state.isStaff, isFalse);
-      expect(state.needsStaffVerification, isTrue);
+      expect(state.needsEmailVerification, isTrue);
     });
 
     test('a verified student is never staff', () {
@@ -33,13 +33,22 @@ void main() {
         emailVerified: true,
       );
       expect(state.isStaff, isFalse);
-      expect(state.needsStaffVerification, isFalse);
+      expect(state.needsEmailVerification, isFalse);
+    });
+
+    test('an unverified student must verify too', () {
+      final state = AuthState(
+        status: AuthStatus.authenticated,
+        user: user(UserRole.student),
+      );
+      expect(state.needsEmailVerification, isTrue);
     });
 
     test('a signed-out state is neither', () {
       const state = AuthState(status: AuthStatus.unauthenticated);
       expect(state.isAuthenticated, isFalse);
       expect(state.isStaff, isFalse);
+      expect(state.needsEmailVerification, isFalse);
     });
   });
 }

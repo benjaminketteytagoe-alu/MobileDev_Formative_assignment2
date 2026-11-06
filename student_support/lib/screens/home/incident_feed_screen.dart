@@ -13,7 +13,6 @@ import 'package:student_support/core/widgets/empty_state_widget.dart';
 import 'package:student_support/core/widgets/incident_list_view.dart';
 import 'package:student_support/core/widgets/sector_picker.dart';
 import 'package:student_support/core/widgets/sign_out_action.dart';
-import 'package:student_support/core/widgets/staff_verification_notice.dart';
 import 'package:student_support/core/widgets/user_avatar.dart';
 import 'package:student_support/models/incident_model.dart';
 import 'package:student_support/navigation/app_router.dart';
@@ -52,8 +51,7 @@ class _IncidentFeedScreenState extends ConsumerState<IncidentFeedScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider).valueOrNull;
-    final isStudent =
-        auth != null && !auth.isStaff && !auth.needsStaffVerification;
+    final isStudent = auth != null && !auth.isStaff;
     final filter = ref.watch(incidentFilterProvider(_scope));
     final firstName = (auth?.user?.name ?? '').trim().split(' ').first;
     void openNewReport() =>
@@ -109,8 +107,6 @@ class _IncidentFeedScreenState extends ConsumerState<IncidentFeedScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (auth?.needsStaffVerification == true)
-                  const StaffVerificationNotice(),
                 _buildSearch(filter),
                 _sectionLabel('Categories'),
                 CategoryPicker(

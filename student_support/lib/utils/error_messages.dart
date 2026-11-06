@@ -51,7 +51,7 @@ String describeError(Object error) {
       case GoogleSignInExceptionCode.clientConfigurationError:
       case GoogleSignInExceptionCode.providerConfigurationError:
         return 'Google sign-in is not set up for this build yet. '
-            'Add the app\'s SHA-1 fingerprint in Firebase (see MANUAL_STEPS.md).';
+            'Add the app\'s SHA-1 fingerprint in Firebase.';
       case GoogleSignInExceptionCode.uiUnavailable:
         return 'Google sign-in is not available on this device.';
       default:

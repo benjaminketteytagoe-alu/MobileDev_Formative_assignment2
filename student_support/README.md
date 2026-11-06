@@ -1,16 +1,18 @@
 # CampusSupport — Campus Incident Reporting App
 
-A production-quality Flutter + Firebase mobile app where university students report campus problems (broken facilities, water shortages, electricity outages, damaged furniture, sanitation problems, safety concerns) and authorized campus staff review reports and move them from submission to resolution.
+A Flutter + Firebase mobile app where university students report campus problems (broken facilities, water shortages, electricity outages, damaged furniture, sanitation problems, safety concerns) and authorized campus staff review reports and move them from submission to resolution.
 
 ## Features
 
 ### Students
-- **Register & sign in** with email/password or **Google** (ALU domains only)
+- **Register & sign in** with email/password or **Google** (ALU domains only), and **verify the ALU email** before reaching the app
 - **Submit reports** with title, description, category (horizontal picture cards), ALU campus sector (Social Commons, Enterprise Commons, Leadership Centre, Collaboration Street) plus room, urgency, and up to 5 photos **from the camera or the gallery**
 - **Submit / Cancel** bar on the report form; Cancel offers to **save a draft** to Firestore, which is restored next time
 - **Browse & filter** all reports by category, sector, status, and urgency under a campus-photo hero
 - **Search** reports by keyword
 - **Upvote** ("Me too") on reports affecting multiple students
+- **Report anonymously**: name and avatar stay hidden in the app
+- **Flag** false or abusive reports for staff to review
 - **Edit/delete** own reports while still in "Submitted" status
 - **View status timeline** showing every status change
 - **In-app notifications** when report status changes
@@ -22,10 +24,11 @@ A production-quality Flutter + Firebase mobile app where university students rep
 - **Update status** along the workflow: Submitted → In Review → In Progress → Resolved
 - **Reject** reports with a required reason, shown to the student in the status history
 - **Assign** reports to themselves ("Assign to me" on the report page)
+- **See flags** on a report, and delete reports along with their photos, history and votes
 
 ### Quality Features
 - **ALU branding**: navy / red / gold theme, CampusSupport logo, native + animated splash screen, custom launcher icon
-- **Category pictures**: every category has artwork; drop a photo into `assets/images/categories/` and it is used instead (see MANUAL_STEPS.md step 9)
+- **Category pictures**: every category has artwork; drop a photo into `assets/images/categories/` and it is used instead (`assets/images/categories/<name>.jpg`)
 - **Sign out** from every main tab (app bar button) and from Profile, with confirmation
 - **DiceBear avatars**: every person gets a generated avatar on the feed, report page, status history and profile. Initials show until it loads or if it cannot load, and avatars are cached on disk for offline use
 - **DiceBear icons and mascots**: category icons and animated empty/error mascots are bundled, so they work offline
@@ -52,8 +55,6 @@ A production-quality Flutter + Firebase mobile app where university students rep
 
 ## Setup
 
-> **Start here:** [MANUAL_STEPS.md](MANUAL_STEPS.md) lists, step by step, everything you must do by hand (brand colors, Firebase Console, deploying the rules, demo accounts, testing checklist).
-
 ### Prerequisites
 - Flutter SDK (latest stable)
 - Android Studio / VS Code with Flutter plugins
@@ -64,7 +65,7 @@ A production-quality Flutter + Firebase mobile app where university students rep
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
 2. Register an Android app with package name `com.example.student_support`
 3. Download `google-services.json` and place it in `android/app/`
-4. Enable **Email/Password** and **Google** authentication in Firebase Console (Google also needs your SHA-1, see MANUAL_STEPS.md step 10)
+4. Enable **Email/Password** and **Google** authentication in Firebase Console (Google also needs your debug SHA-1 in the Firebase project settings)
 5. Create a Firestore database (start in test mode, then deploy the rules below)
 6. Enable Firebase Storage
 
@@ -148,7 +149,7 @@ tool/fetch_dicebear_assets.py # Re-downloads the bundled DiceBear SVGs
 
 Navy is the only color for primary actions (buttons, FAB, links); gold is a sparing accent (the hero call to action); red means errors and destructive actions only.
 
-These are placeholders until the official hex codes are confirmed. To change them, follow MANUAL_STEPS.md step 1.
+These are placeholders until the official hex codes are confirmed. To change them, edit `lib/core/theme/app_colors.dart` and `tool/generate_brand_assets.py`, then rerun the icon commands.
 
 The logo is a "CS" monogram. To use your own, replace the files written by `tool/generate_brand_assets.py` and run `dart run flutter_launcher_icons` and `dart run flutter_native_splash:create`.
 
@@ -194,10 +195,23 @@ Every transition writes a history entry with who, when, and an optional note.
 
 ## Known Limitations
 
+- Firebase Storage needs the paid Blaze plan, so photos run on the local Storage emulator and exist only on the computer running it (see below)
+- Anonymous reports are hidden in the app, but the reporter's user ID stays in the document, so someone reading Firestore directly could match it to their named reports. Hiding it needs Cloud Functions, which also needs Blaze
 - Push notifications use in-app notifications only (no FCM)
 - Image upload progress shown via button loading state
 - Draft photos stay on the phone that took them; a draft opened on another device restores the text only
 - Search uses `searchKeywords` array (not full-text search)
+
+## Running with the Storage emulator
+
+Authentication and Firestore use the live Firebase project. Photos use the official Firebase Storage emulator with the same SDK calls and `storage.rules`.
+
+1. Terminal 1: `./tool/run_storage_emulator.sh` (needs Java; photos are kept in `.emulator-data`)
+2. Terminal 2: `flutter run --dart-define=STORAGE_EMULATOR_HOST=10.0.2.2`
+
+On a phone over USB, run `adb reverse tcp:9199 tcp:9199` and use `STORAGE_EMULATOR_HOST=127.0.0.1`. Without the flag, the app uses the cloud bucket.
+
+Security-rule tests: `cd rules_test && npm install && npm test`
 
 ## License
 

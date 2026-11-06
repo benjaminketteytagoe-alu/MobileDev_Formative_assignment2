@@ -43,7 +43,9 @@ class AppAssets {
 
   static String? get campusHero => _photo('assets/images/campus_hero');
 
-  static String? get splashImage => _photo('assets/images/splash_image');
+  /// Falls back to the campus photo when no splash photo is bundled.
+  static String? get splashImage =>
+      _photo('assets/images/splash_image') ?? campusHero;
 
   static String? categoryPhoto(String category) =>
       _photo('assets/images/categories/${category.toLowerCase()}');

@@ -8,7 +8,6 @@ import 'package:student_support/core/theme/app_spacing.dart';
 import 'package:student_support/core/widgets/custom_app_bar.dart';
 import 'package:student_support/core/widgets/premium_button.dart';
 import 'package:student_support/core/widgets/sign_out_action.dart';
-import 'package:student_support/core/widgets/staff_verification_notice.dart';
 import 'package:student_support/core/widgets/user_avatar.dart';
 import 'package:student_support/models/notification_model.dart';
 import 'package:student_support/models/user_model.dart';
@@ -105,8 +104,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                   ),
-                if (authState?.needsStaffVerification == true)
-                  const StaffVerificationNotice(),
                 const SizedBox(height: AppSpacing.xl),
 
                 // Profile info cards

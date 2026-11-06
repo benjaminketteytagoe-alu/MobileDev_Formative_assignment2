@@ -124,6 +124,26 @@ final voteStatusProvider = StreamProvider.autoDispose.family<bool, String>((
 });
 
 /// Stream of notifications for the current user.
+/// Whether the signed-in user has flagged a report.
+final hasFlaggedProvider = StreamProvider.autoDispose.family<bool, String>((
+  ref,
+  incidentId,
+) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.user?.id ?? '';
+  if (uid.isEmpty) return Stream.value(false);
+  return ref
+      .watch(incidentServiceProvider)
+      .hasFlagged(incidentId: incidentId, uid: uid);
+});
+
+/// How many people flagged a report. Staff only.
+final flagCountProvider = StreamProvider.autoDispose.family<int, String>((
+  ref,
+  incidentId,
+) {
+  return ref.watch(incidentServiceProvider).getFlagCount(incidentId);
+});
+
 final notificationsProvider =
     StreamProvider.autoDispose<List<NotificationModel>>((ref) {
       final userId = ref.watch(
@@ -152,6 +172,7 @@ class IncidentController {
     required String location,
     required String urgency,
     required List<String> imagePaths,
+    bool anonymous = false,
   }) async {
     final user = _ref.read(authStateProvider).valueOrNull?.user;
     if (user == null || user.id.isEmpty) {
@@ -192,7 +213,8 @@ class IncidentController {
       sector: sector,
       urgency: urgency,
       reporterId: user.id,
-      reporterName: user.name,
+      reporterName: anonymous ? IncidentModel.anonymousName : user.name,
+      anonymous: anonymous,
       images: uploaded,
       searchKeywords: IncidentModel.generateSearchKeywords(title),
     );
@@ -376,12 +398,22 @@ class IncidentController {
         'You do not have permission to delete this report.',
       );
     }
-    // Delete images from storage
-    final storage = _ref.read(storageServiceProvider);
-    for (final url in incident.images) {
-      await storage.deleteImage(url);
+    await _ref
+        .read(incidentServiceProvider)
+        .deleteIncident(incidentId, withFlags: isStaff);
+    // Photos go last, so a failed delete cannot leave a report without them.
+    await _deleteAll(_ref.read(storageServiceProvider), incident.images);
+  }
+
+  /// Flag a report as false or abusive for staff to review.
+  Future<void> flagReport(String incidentId) async {
+    final user = _ref.read(authStateProvider).valueOrNull?.user;
+    if (user == null) {
+      throw const AppException('You need to be signed in.');
     }
-    await _ref.read(incidentServiceProvider).deleteIncident(incidentId);
+    await _ref
+        .read(incidentServiceProvider)
+        .flagIncident(incidentId: incidentId, uid: user.id);
   }
 
   /// Assign a report to the signed-in staff member.

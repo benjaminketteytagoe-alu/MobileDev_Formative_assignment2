@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:student_support/core/alu_email.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:student_support/core/theme/app_colors.dart';
 import 'package:student_support/core/theme/app_palette.dart';
@@ -90,7 +92,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: PremiumTextField(
             controller: _emailController,
             labelText: 'ALU email',
-            hintText: 'name@alustudent.com',
+            hintText: 'name${AluEmail.studentDomain}',
             prefixIcon: const Icon(Icons.email_outlined),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.send,

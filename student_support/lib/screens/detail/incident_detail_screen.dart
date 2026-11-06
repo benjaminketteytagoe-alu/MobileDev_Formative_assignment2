@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:student_support/core/dicebear.dart';
 import 'package:student_support/core/theme/app_colors.dart';
@@ -11,7 +10,7 @@ import 'package:student_support/core/widgets/category_art.dart';
 import 'package:student_support/core/widgets/custom_app_bar.dart';
 import 'package:student_support/core/widgets/dicebear_art.dart';
 import 'package:student_support/core/widgets/empty_state_widget.dart';
-import 'package:student_support/core/widgets/motion.dart';
+import 'package:student_support/core/widgets/flag_report_button.dart';
 import 'package:student_support/core/widgets/status_timeline_widget.dart';
 import 'package:student_support/core/widgets/upvote_button.dart';
 import 'package:student_support/core/widgets/user_avatar.dart';
@@ -20,6 +19,8 @@ import 'package:student_support/navigation/app_router.dart';
 import 'package:student_support/providers/auth_provider.dart';
 import 'package:student_support/providers/incident_provider.dart';
 import 'package:student_support/utils/error_messages.dart';
+import 'package:student_support/screens/detail/status_progress.dart';
+import 'package:student_support/screens/detail/status_update_panel.dart';
 import 'package:student_support/utils/incident_labels.dart';
 
 class IncidentDetailScreen extends ConsumerWidget {
@@ -226,15 +227,21 @@ class _DetailBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          _StatusProgress(status: incident.status),
+          StatusProgress(status: incident.status),
           const SizedBox(height: AppSpacing.lg),
           _Section(label: 'Description', value: incident.description),
           const SizedBox(height: AppSpacing.lg),
-          _PersonSection(
-            label: 'Reported by',
-            userId: incident.reporterId,
-            name: incident.reporterName,
-          ),
+          if (incident.anonymous)
+            const _Section(
+              label: 'Reported by',
+              value: IncidentModel.anonymousName,
+            )
+          else
+            _PersonSection(
+              label: 'Reported by',
+              userId: incident.reporterId,
+              name: incident.reporterName,
+            ),
           const SizedBox(height: AppSpacing.lg),
           if (incident.assignedTo == null)
             const _Section(label: 'Assigned to', value: 'Not assigned yet')
@@ -299,10 +306,17 @@ class _DetailBody extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
           ],
-          if (isStaff) _StatusUpdatePanel(incident: incident),
+          if (isStaff) ...[
+            FlagCountNotice(incidentId: incident.id),
+            StatusUpdatePanel(incident: incident),
+          ],
           const SizedBox(height: AppSpacing.lg),
           if (!isOwner) ...[
             UpvoteButton(incidentId: incident.id),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          if (!isOwner && !isStaff) ...[
+            FlagReportButton(incidentId: incident.id),
             const SizedBox(height: AppSpacing.lg),
           ],
           StatusTimelineWidget(incidentId: incident.id),
@@ -447,352 +461,6 @@ class _StatusBadge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Tracker showing how far a report has progressed. A rejected report leaves
-/// the normal path, so its last step becomes a red "Rejected".
-class _StatusProgress extends StatelessWidget {
-  final String status;
-
-  const _StatusProgress({required this.status});
-
-  static const _path = ['submitted', 'in_review', 'in_progress', 'resolved'];
-
-  @override
-  Widget build(BuildContext context) {
-    final rejected = status == 'rejected';
-    final steps = rejected ? ['submitted', 'rejected'] : _path;
-    final current = steps.indexOf(status);
-    final palette = context.palette;
-    final duration = motionAllowed(context)
-        ? const Duration(milliseconds: 450)
-        : Duration.zero;
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            for (var i = 0; i < steps.length; i++) ...[
-              if (i > 0)
-                Expanded(
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(end: i <= current ? 1 : 0),
-                    duration: duration,
-                    curve: Curves.easeOutCubic,
-                    builder: (context, fill, _) => LinearProgressIndicator(
-                      value: fill,
-                      minHeight: 2,
-                      backgroundColor: palette.border,
-                      color: IncidentLabels.statusColor(steps[i]),
-                    ),
-                  ),
-                ),
-              Icon(
-                i <= current
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
-                size: 20,
-                color: i <= current
-                    ? IncidentLabels.statusColor(steps[i])
-                    : palette.textHint,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        // Equal shares, so long labels shorten rather than overflow.
-        Row(
-          children: [
-            for (var i = 0; i < steps.length; i++)
-              Expanded(
-                child: Text(
-                  IncidentLabels.status(steps[i]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: i == 0
-                      ? TextAlign.start
-                      : i == steps.length - 1
-                      ? TextAlign.end
-                      : TextAlign.center,
-                  style: context.text.caption.copyWith(
-                    color: i == current ? palette.textPrimary : null,
-                    fontWeight: i == current ? FontWeight.w600 : null,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Asks staff why a report is rejected. Returns the reason, which the student
-/// sees in the status history, or null if cancelled.
-class _RejectDialog extends StatefulWidget {
-  const _RejectDialog();
-
-  @override
-  State<_RejectDialog> createState() => _RejectDialogState();
-}
-
-class _RejectDialogState extends State<_RejectDialog> {
-  final _reason = TextEditingController();
-
-  @override
-  void dispose() {
-    _reason.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final reason = _reason.text.trim();
-    return AlertDialog(
-      title: const Text('Reject this report?'),
-      content: TextField(
-        controller: _reason,
-        autofocus: true,
-        maxLines: 3,
-        maxLength: 300,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          labelText: 'Reason',
-          hintText: 'The student will see this',
-        ),
-        onChanged: (_) => setState(() {}),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: reason.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(reason),
-          style: TextButton.styleFrom(foregroundColor: AppColors.error),
-          child: const Text('Reject report'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Staff-only controls. Shows progress while saving and reports the result.
-class _StatusUpdatePanel extends ConsumerStatefulWidget {
-  final IncidentModel incident;
-
-  const _StatusUpdatePanel({required this.incident});
-
-  @override
-  ConsumerState<_StatusUpdatePanel> createState() => _StatusUpdatePanelState();
-}
-
-class _StatusUpdatePanelState extends ConsumerState<_StatusUpdatePanel> {
-  String? _saving;
-  bool _assigning = false;
-
-  Future<void> _assignToMe() async {
-    if (_assigning) return;
-    setState(() => _assigning = true);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(incidentControllerProvider).assignToMe(widget.incident.id);
-      HapticFeedback.lightImpact();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Report assigned to you.')),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Could not assign. ${describeError(e)}'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _assigning = false);
-    }
-  }
-
-  Future<void> _update(String status) async {
-    if (_saving != null || status == widget.incident.status) return;
-
-    String? note;
-    if (status == 'rejected') {
-      note = await showDialog<String>(
-        context: context,
-        builder: (context) => const _RejectDialog(),
-      );
-      if (note == null || !mounted) return;
-    }
-
-    if (status == 'resolved') {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Mark as resolved?'),
-          content: const Text(
-            'The student who reported this issue will see it as resolved.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Mark resolved'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
-
-    setState(() => _saving = status);
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref
-          .read(incidentControllerProvider)
-          .updateStatus(widget.incident.id, status, note: note);
-      HapticFeedback.lightImpact();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Status changed to ${IncidentLabels.status(status)}.'),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Could not update status. ${describeError(e)}'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = null);
-    }
-  }
-
-  List<String> _validNextStatuses() {
-    return IncidentModel.validTransitions[widget.incident.status] ?? [];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentUid = ref.watch(
-      authStateProvider.select((s) => s.valueOrNull?.user?.id),
-    );
-    final nextStatuses = _validNextStatuses();
-    if (nextStatuses.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: context.palette.textHint.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: context.palette.textHint.withValues(alpha: 0.2)),
-        ),
-        child: Text(
-          'This report is ${IncidentLabels.status(widget.incident.status)}. No further status changes are allowed.',
-          style: context.text.body,
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: context.palette.accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: context.palette.accent.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Update Status', style: context.text.title),
-              ),
-              if (widget.incident.assignedTo != currentUid)
-                TextButton.icon(
-                  onPressed: _assigning ? null : _assignToMe,
-                  icon: _assigning
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.assignment_ind_outlined, size: 18),
-                  label: const Text('Assign to me'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: context.palette.accent,
-                  ),
-                )
-              else
-                Text(
-                  'Assigned to you',
-                  style: context.text.caption.copyWith(
-                    color: AppColors.resolved,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              for (final status in nextStatuses) ...[
-                if (status != nextStatuses.first)
-                  const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _statusButton(status)),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusButton(String status) {
-    final color = IncidentLabels.statusColor(status);
-    final isSaving = _saving == status;
-
-    return Material(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: InkWell(
-        onTap: _saving == null ? () => _update(status) : null,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        child: Container(
-          height: 40,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: color),
-          ),
-          child: isSaving
-              ? SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
-                  ),
-                )
-              : Text(
-                  IncidentLabels.status(status),
-                  textAlign: TextAlign.center,
-                  style: context.text.caption.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
       ),
     );
   }

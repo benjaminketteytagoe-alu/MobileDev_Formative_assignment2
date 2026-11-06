@@ -122,4 +122,29 @@ void main() {
       expect(json.containsKey('assignedToName'), isFalse);
     });
   });
+
+  test('the anonymous flag survives a round trip through Firestore', () {
+    final report = IncidentModel(
+      title: 't',
+      description: 'd',
+      category: 'safety',
+      location: 'l',
+      reporterId: 'u1',
+      reporterName: IncidentModel.anonymousName,
+      anonymous: true,
+    );
+    expect(IncidentModel.fromJson('i', report.toJson()).anonymous, isTrue);
+  });
+
+  test('a named report writes no anonymous field', () {
+    final report = IncidentModel(
+      title: 't',
+      description: 'd',
+      category: 'water',
+      location: 'l',
+      reporterId: 'u1',
+      reporterName: 'Ama',
+    );
+    expect(report.toJson().containsKey('anonymous'), isFalse);
+  });
 }

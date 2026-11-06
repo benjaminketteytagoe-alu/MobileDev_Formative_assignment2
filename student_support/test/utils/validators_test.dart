@@ -2,27 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:student_support/utils/validators.dart';
 
 void main() {
-  group('Validators.roleBasedEmail', () {
-    test('accepts a student address for the student role', () {
-      expect(Validators.roleBasedEmail('jane@alustudent.com', 'student'), isNull);
+  group('Validators.detectRoleFromEmail', () {
+    test('a student address gives the student role', () {
+      expect(Validators.detectRoleFromEmail('jane@alustudent.com'), 'student');
     });
 
-    test('rejects a staff address for the student role', () {
-      expect(
-        Validators.roleBasedEmail('jane@alueducation.com', 'student'),
-        isNotNull,
-      );
+    test('a staff address gives the staff role', () {
+      expect(Validators.detectRoleFromEmail('jane@alueducation.com'), 'staff');
     });
 
-    test('rejects a student address for the staff role', () {
-      expect(
-        Validators.roleBasedEmail('jane@alustudent.com', 'staff'),
-        isNotNull,
-      );
-    });
-
-    test('rejects an empty value', () {
-      expect(Validators.roleBasedEmail('', 'student'), 'Email is required');
+    test('an outside address gives no role', () {
+      expect(Validators.detectRoleFromEmail('jane@gmail.com'), isNull);
     });
   });
 

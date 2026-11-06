@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:student_support/core/alu_email.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:student_support/core/theme/app_colors.dart';
 import 'package:student_support/core/theme/app_palette.dart';
@@ -53,7 +55,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final basic = Validators.email(value?.trim());
     if (basic != null) return basic;
     if (!Validators.isValidDomain(value!.trim())) {
-      return 'Use your @alustudent.com or @alueducation.com email';
+      return AluEmail.requirement;
     }
     return null;
   }
@@ -128,7 +130,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 PremiumTextField(
                   controller: _emailController,
                   labelText: 'ALU email',
-                  hintText: 'name@alustudent.com',
+                  hintText: 'name${AluEmail.studentDomain}',
                   prefixIcon: const Icon(Icons.email_outlined),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,

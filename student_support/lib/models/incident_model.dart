@@ -29,10 +29,14 @@ class IncidentModel {
     'rejected',
   ];
 
+  /// Shown in place of the reporter's name on an anonymous report. Must match
+  /// firestore.rules.
+  static const String anonymousName = 'Anonymous student';
+
   /// Valid urgency levels.
   static const List<String> urgencies = ['low', 'medium', 'high'];
 
-  /// Valid status transitions: fromStatus → [toStatuss].
+  /// Valid status transitions: fromStatus → [toStatuses].
   static const Map<String, List<String>> validTransitions = {
     'submitted': ['in_review', 'rejected'],
     'in_review': ['in_progress', 'rejected'],
@@ -53,6 +57,10 @@ class IncidentModel {
   final String status;
   final String reporterId;
   final String reporterName;
+
+  /// Hides the reporter from other users in the app. [reporterId] stays on
+  /// the report so its owner can track it and staff can act on misuse.
+  final bool anonymous;
   final String? assignedTo;
   final String? assignedToName;
   final List<String> images;
@@ -73,6 +81,7 @@ class IncidentModel {
     this.status = 'submitted',
     required this.reporterId,
     required this.reporterName,
+    this.anonymous = false,
     this.assignedTo,
     this.assignedToName,
     this.images = const [],
@@ -96,6 +105,7 @@ class IncidentModel {
       status: json['status'] as String? ?? 'submitted',
       reporterId: json['reporterId'] as String? ?? '',
       reporterName: json['reporterName'] as String? ?? '',
+      anonymous: json['anonymous'] as bool? ?? false,
       assignedTo: json['assignedTo'] as String?,
       assignedToName: json['assignedToName'] as String?,
       images: List<String>.from(json['images'] ?? []),
@@ -118,6 +128,7 @@ class IncidentModel {
       'status': status,
       'reporterId': reporterId,
       'reporterName': reporterName,
+      if (anonymous) 'anonymous': true,
       if (assignedTo != null) 'assignedTo': assignedTo,
       if (assignedToName != null) 'assignedToName': assignedToName,
       'images': images,
@@ -140,6 +151,7 @@ class IncidentModel {
     String? status,
     String? reporterId,
     String? reporterName,
+    bool? anonymous,
     String? assignedTo,
     String? assignedToName,
     List<String>? images,
@@ -160,6 +172,7 @@ class IncidentModel {
       status: status ?? this.status,
       reporterId: reporterId ?? this.reporterId,
       reporterName: reporterName ?? this.reporterName,
+      anonymous: anonymous ?? this.anonymous,
       assignedTo: assignedTo ?? this.assignedTo,
       assignedToName: assignedToName ?? this.assignedToName,
       images: images ?? this.images,

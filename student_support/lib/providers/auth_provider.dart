@@ -20,15 +20,15 @@ class AuthState {
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
 
-  /// Staff tools are only unlocked once the staff email is verified. The
-  /// Firestore rules apply the same check, so this only controls what the
-  /// UI shows.
+  /// Staff tools need a verified staff email. The security rules apply the
+  /// same check, so this only controls what the UI shows.
   bool get isStaff =>
       isAuthenticated && user?.role == UserRole.staff && emailVerified;
 
-  /// A staff account that still has to confirm its email address.
-  bool get needsStaffVerification =>
-      isAuthenticated && user?.role == UserRole.staff && !emailVerified;
+  /// An account that still has to confirm its ALU email address. Google
+  /// accounts arrive verified.
+  bool get needsEmailVerification =>
+      isAuthenticated && !emailVerified;
 
   AuthState copyWith({
     AuthStatus? status,

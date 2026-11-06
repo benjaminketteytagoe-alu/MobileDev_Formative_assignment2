@@ -1,9 +1,7 @@
+import '../core/alu_email.dart';
+
 class Validators {
   Validators._();
-
-  // Domain constants
-  static const String studentDomain = '@alustudent.com';
-  static const String staffDomain = '@alueducation.com';
 
   static String? email(String? value) {
     if (value == null || value.isEmpty) {
@@ -16,61 +14,12 @@ class Validators {
     return null;
   }
 
-  /// Validates that the email belongs to the student domain (@alustudent.com)
-  static String? studentEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
-    }
-    if (!value.toLowerCase().endsWith(studentDomain)) {
-      return 'Students must use their @alustudent.com email';
-    }
-    return null;
-  }
-
-  /// Validates that the email belongs to the staff domain (@alueducation.com)
-  static String? staffEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
-    }
-    if (!value.toLowerCase().endsWith(staffDomain)) {
-      return 'Staff must use their @alueducation.com email';
-    }
-    return null;
-  }
-
-  /// Validates email domain matches the expected role
-  static String? roleBasedEmail(String? value, String role) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
-    }
-    final lowerEmail = value.toLowerCase();
-    if (role == 'staff' && !lowerEmail.endsWith(staffDomain)) {
-      return 'Staff must use their @alueducation.com email';
-    }
-    if (role == 'student' && !lowerEmail.endsWith(studentDomain)) {
-      return 'Students must use their @alustudent.com email';
-    }
-    return null;
-  }
-
   /// Detects the role from the email domain
   static String? detectRoleFromEmail(String? value) {
     if (value == null || value.isEmpty) return null;
     final lower = value.toLowerCase();
-    if (lower.endsWith(studentDomain)) return 'student';
-    if (lower.endsWith(staffDomain)) return 'staff';
+    if (lower.endsWith(AluEmail.studentDomain)) return 'student';
+    if (lower.endsWith(AluEmail.staffDomain)) return 'staff';
     return null;
   }
 
@@ -78,7 +27,7 @@ class Validators {
   static bool isValidDomain(String? value) {
     if (value == null || value.isEmpty) return false;
     final lower = value.toLowerCase();
-    return lower.endsWith(studentDomain) || lower.endsWith(staffDomain);
+    return lower.endsWith(AluEmail.studentDomain) || lower.endsWith(AluEmail.staffDomain);
   }
 
   static String? required(String? value, [String? fieldName]) {
