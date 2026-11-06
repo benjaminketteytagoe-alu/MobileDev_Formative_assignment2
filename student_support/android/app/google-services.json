@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "631219479011",
+    "firebase_url": "https://studentsupport-88445-default-rtdb.firebaseio.com",
+    "project_id": "studentsupport-88445",
+    "storage_bucket": "studentsupport-88445.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631219479011:android:6d9cf112d7c11c609e40d6",
+        "android_client_info": {
+          "package_name": "com.example.student_support"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "631219479011-i5lpl3eajq3vj6dj7k3dr8v5ln8c0a9d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.student_support",
+            "certificate_hash": "f8b942c600b9b1ebdfc0a68f0b40b38b5e9ada6f"
+          }
+        },
+        {
+          "client_id": "631219479011-v1fd4hvu3qimuoqkua3mme6gpikt204m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlARStEPzxTKQny4kW9cFP4L97O2obhyo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "631219479011-v1fd4hvu3qimuoqkua3mme6gpikt204m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "631219479011-ggl177phgktsp9f1fokjfg2f6172ijlm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.studentSupport"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

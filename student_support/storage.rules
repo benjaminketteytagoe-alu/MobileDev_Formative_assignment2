@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Incident photos are stored under incidents/{uid}/{fileName}.
+// Users can only upload into their own folder, only images, and only up to 5 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /incidents/{uid}/{fileName} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      // Lets the app clean up photos when a submission fails part way.
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

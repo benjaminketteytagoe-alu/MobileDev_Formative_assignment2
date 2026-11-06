@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB15C"/>
+      <stop offset="1" stop-color="#FF7A1A"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="160" fill="url(#bg)"/>
+  <circle cx="200" cy="30" r="18" fill="#FFE2B8" opacity="0.8"/>
+  <circle cx="30" cy="40" r="40" fill="#FFFFFF" opacity="0.12"/>
+  <!-- ground -->
+  <rect x="0" y="132" width="240" height="28" fill="#C2540A"/>
+  <!-- campus building -->
+  <rect x="58" y="48" width="96" height="86" rx="4" fill="#0B2A5B"/>
+  <polygon points="52,50 106,22 160,50" fill="#E4312B"/>
+  <rect x="68" y="60" width="16" height="14" rx="2" fill="#F5B014"/>
+  <rect x="98" y="60" width="16" height="14" rx="2" fill="#FFF4D6"/>
+  <rect x="128" y="60" width="16" height="14" rx="2" fill="#F5B014"/>
+  <rect x="68" y="84" width="16" height="14" rx="2" fill="#FFF4D6"/>
+  <!-- broken window -->
+  <rect x="98" y="84" width="16" height="14" rx="2" fill="#5C7CB5"/>
+  <polyline points="99,85 106,92 102,97 113,97" fill="none" stroke="#FFFFFF" stroke-width="1.6"/>
+  <rect x="128" y="84" width="16" height="14" rx="2" fill="#F5B014"/>
+  <rect x="96" y="108" width="20" height="26" rx="2" fill="#FFB15C"/>
+  <circle cx="112" cy="122" r="1.8" fill="#0B2A5B"/>
+  <!-- traffic cone -->
+  <polygon points="182,134 194,96 206,134" fill="#FFFFFF"/>
+  <polygon points="186,122 202,122 204,128 184,128" fill="#E4312B"/>
+  <polygon points="190,108 198,108 200,114 188,114" fill="#E4312B"/>
+  <rect x="176" y="132" width="36" height="5" rx="2" fill="#0B2A5B"/>
+  <!-- wrench -->
+  <g transform="translate(34 104) rotate(-35)">
+    <rect x="-4" y="0" width="8" height="34" rx="4" fill="#FFFFFF"/>
+    <circle cx="0" cy="0" r="10" fill="#FFFFFF"/>
+    <rect x="-3.5" y="-12" width="7" height="10" fill="#FF9A45"/>
+  </g>
+</svg>
