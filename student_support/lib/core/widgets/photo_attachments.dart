@@ -94,7 +94,11 @@ class _PhotoAttachmentsState extends State<PhotoAttachments> {
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('Choose from gallery'),
-              subtitle: Text('Up to $_remaining more'),
+              subtitle: Text(
+                _remaining == 1
+                    ? 'Pick 1 more photo'
+                    : 'Pick up to $_remaining photos at once',
+              ),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -104,7 +108,9 @@ class _PhotoAttachmentsState extends State<PhotoAttachments> {
     );
     if (source == null || !mounted) return;
     HapticFeedback.selectionClick();
-    source == ImageSource.camera ? await _takePhoto() : await _pickFromGallery();
+    source == ImageSource.camera
+        ? await _takePhoto()
+        : await _pickFromGallery();
   }
 
   Future<void> _takePhoto() async {
@@ -129,15 +135,29 @@ class _PhotoAttachmentsState extends State<PhotoAttachments> {
 
   Future<void> _pickFromGallery() async {
     try {
-      final picked = await _picker.pickMultiImage(
-        maxWidth: _maxDimension,
-        maxHeight: _maxDimension,
-        imageQuality: _quality,
-        limit: _remaining,
-        // Skips location and other metadata, so no extra permission prompt
-        // and no GPS data leaves the phone.
-        requestFullMetadata: false,
-      );
+      // Multi-select needs a limit of at least 2, so the last free slot uses
+      // the single-photo picker.
+      final List<XFile> picked;
+      if (_remaining == 1) {
+        final photo = await _picker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: _maxDimension,
+          maxHeight: _maxDimension,
+          imageQuality: _quality,
+          requestFullMetadata: false,
+        );
+        picked = [?photo];
+      } else {
+        picked = await _picker.pickMultiImage(
+          maxWidth: _maxDimension,
+          maxHeight: _maxDimension,
+          imageQuality: _quality,
+          limit: _remaining,
+          // Skips location and other metadata, so no extra permission prompt
+          // and no GPS data leaves the phone.
+          requestFullMetadata: false,
+        );
+      }
       if (mounted) _add(picked.map((f) => f.path).toList());
     } on PlatformException catch (e) {
       _showMessage(

@@ -93,7 +93,9 @@ class _SectorChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? AppColors.primaryLight : AppColors.primary;
-    final label = sector.isEmpty ? 'All sectors' : IncidentLabels.sector(sector);
+    final label = sector.isEmpty
+        ? 'All sectors'
+        : IncidentLabels.sector(sector);
     final icon = sector.isEmpty
         ? Icons.map_outlined
         : IncidentLabels.sectorIcon(sector);
@@ -125,11 +127,7 @@ class _SectorChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: selected ? Colors.white : accent,
-                ),
+                Icon(icon, size: 20, color: selected ? Colors.white : accent),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   label,

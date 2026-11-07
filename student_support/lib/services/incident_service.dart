@@ -335,8 +335,11 @@ class IncidentService {
     });
   }
 
-  DocumentReference<Map<String, dynamic>> _draftDoc(String uid) =>
-      _firestore.collection('users').doc(uid).collection('drafts').doc('current');
+  DocumentReference<Map<String, dynamic>> _draftDoc(String uid) => _firestore
+      .collection('users')
+      .doc(uid)
+      .collection('drafts')
+      .doc('current');
 
   /// Saves the user's draft. Offline, Firestore keeps the write in its local
   /// cache and only completes the future once the server confirms, so the
@@ -357,10 +360,9 @@ class IncidentService {
   }
 
   Future<void> deleteDraft(String uid) async {
-    await _draftDoc(uid).delete().timeout(
-      const Duration(seconds: 3),
-      onTimeout: () {},
-    );
+    await _draftDoc(uid)
+        .delete()
+        .timeout(const Duration(seconds: 3), onTimeout: () {});
   }
 
   Stream<int> getCountByStatusStream(String status) {

@@ -44,8 +44,12 @@ class PremiumTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextPrimary : context.palette.textPrimary;
-    final hintColor = isDark ? AppColors.darkTextHint : context.palette.textHint;
+    final textColor = isDark
+        ? AppColors.darkTextPrimary
+        : context.palette.textPrimary;
+    final hintColor = isDark
+        ? AppColors.darkTextHint
+        : context.palette.textHint;
     final borderColor = isDark ? AppColors.darkBorder : context.palette.border;
     final focusColor = isDark ? AppColors.primaryLight : AppColors.primary;
 
@@ -84,7 +88,9 @@ class PremiumTextField extends StatelessWidget {
         errorBorder: outline(AppColors.error),
         focusedErrorBorder: outline(AppColors.error, 2),
         filled: true,
-        fillColor: isDark ? AppColors.darkSurfaceVariant : context.palette.surface,
+        fillColor: isDark
+            ? AppColors.darkSurfaceVariant
+            : context.palette.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.md,

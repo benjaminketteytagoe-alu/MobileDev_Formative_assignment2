@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show StorageException;
 
 /// An error whose message is already written for the user.
 class AppException implements Exception {
@@ -72,6 +73,19 @@ String describeError(Object error) {
         return 'The upload was cancelled.';
     }
     return error.message ?? 'Something went wrong. Please try again.';
+  }
+
+  if (error is StorageException) {
+    switch (error.statusCode) {
+      case '401':
+      case '403':
+        return 'You do not have permission to upload this photo.';
+      case '413':
+        return 'This photo is too large. The limit is 5 MB.';
+      case '415':
+        return 'Only image files can be uploaded.';
+    }
+    return 'The photo service could not be reached. Try again.';
   }
 
   return 'Something went wrong. Please try again.';

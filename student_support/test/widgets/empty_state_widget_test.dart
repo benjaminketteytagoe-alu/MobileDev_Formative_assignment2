@@ -4,7 +4,9 @@ import 'package:student_support/core/widgets/empty_state_widget.dart';
 
 void main() {
   group('EmptyStateWidget', () {
-    testWidgets('renders with icon, title, and message', (WidgetTester tester) async {
+    testWidgets('renders with icon, title, and message', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -22,7 +24,9 @@ void main() {
       expect(find.text('No items found'), findsOneWidget);
     });
 
-    testWidgets('renders action button when provided', (WidgetTester tester) async {
+    testWidgets('renders action button when provided', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -41,7 +45,8 @@ void main() {
     });
 
     testWidgets('does not render action button when not provided', (
-        WidgetTester tester) async {
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

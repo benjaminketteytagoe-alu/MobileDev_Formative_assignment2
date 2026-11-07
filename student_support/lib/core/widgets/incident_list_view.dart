@@ -51,9 +51,9 @@ class _IncidentListViewState extends State<IncidentListView> {
       // would match the reporter's named reports.
       reporterId: incident.anonymous ? '' : incident.reporterId,
       reporterName: incident.reporterName,
-      onTap: () => Navigator.of(
-        context,
-      ).pushNamed(AppRouter.incidentDetail, arguments: incident.id),
+      onTap: () =>
+          Navigator.of(context)
+              .pushNamed(AppRouter.incidentDetail, arguments: incident.id),
     );
     if (!_shown.add(incident.id)) return card;
     return FadeSlideIn(

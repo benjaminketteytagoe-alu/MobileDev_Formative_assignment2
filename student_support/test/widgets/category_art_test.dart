@@ -72,7 +72,11 @@ void main() {
     // The cards scroll horizontally, so bring each one into view first.
     for (final category in IncidentModel.categories) {
       final label = find.text(IncidentLabels.category(category));
-      await tester.scrollUntilVisible(label, 100, scrollable: find.byType(Scrollable));
+      await tester.scrollUntilVisible(
+        label,
+        100,
+        scrollable: find.byType(Scrollable),
+      );
       expect(label, findsOneWidget);
     }
     await tester.tap(find.text('Safety'));

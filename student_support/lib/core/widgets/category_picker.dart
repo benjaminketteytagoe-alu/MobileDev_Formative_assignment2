@@ -91,7 +91,9 @@ class _CategoryTile extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      hint: _isAll ? 'Show every category' : IncidentLabels.categoryHint(category),
+      hint: _isAll
+          ? 'Show every category'
+          : IncidentLabels.categoryHint(category),
       excludeSemantics: true,
       child: Material(
         color: Colors.transparent,

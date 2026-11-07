@@ -15,11 +15,7 @@ class UpvoteButton extends ConsumerWidget {
 
   const UpvoteButton({super.key, required this.incidentId});
 
-  Future<void> _toggle(
-    BuildContext context,
-    WidgetRef ref,
-    bool voted,
-  ) async {
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool voted) async {
     HapticFeedback.lightImpact();
     final messenger = ScaffoldMessenger.of(context);
     final controller = ref.read(incidentControllerProvider);

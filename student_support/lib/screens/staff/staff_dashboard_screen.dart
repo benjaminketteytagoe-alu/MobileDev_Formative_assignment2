@@ -35,7 +35,7 @@ class StaffDashboardScreen extends ConsumerWidget {
         body: const EmptyStateWidget(
           icon: Icons.lock_outline,
           title: 'Staff access only',
-          message: 'This area is available to verified campus staff.',
+          message: 'This area is available to campus staff.',
         ),
       );
     }

@@ -4,7 +4,7 @@ rules_version = '2';
 //
 // Roles
 //   student : any signed-in user whose user document has role "student".
-//   staff   : role "staff" in the user document AND a verified
+//   staff   : role "staff" in the user document AND an
 //             @alueducation.com email address. Both conditions are checked
 //             server-side, so changing the app code cannot grant staff rights.
 service cloud.firestore {
@@ -26,11 +26,10 @@ service cloud.firestore {
       return tokenEmail().matches('.*@alustudent[.]com');
     }
 
-    // A verified ALU account. Everything except a user's own profile needs
-    // this, so an outside or unconfirmed account can read nothing.
+    // An ALU account. Everything except a user's own profile needs this, so
+    // an outside account can read nothing.
     function isMember() {
       return signedIn()
-        && request.auth.token.email_verified == true
         && (hasStudentEmail() || hasStaffEmail());
     }
 
@@ -40,7 +39,6 @@ service cloud.firestore {
 
     function isStaff() {
       return signedIn()
-        && request.auth.token.email_verified == true
         && hasStaffEmail()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && userDoc().data.role == 'staff';
@@ -79,18 +77,17 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isStaff());
 
-      // A user may only create their own profile. The role must match the
-      // email domain, so a student address can never be stored as staff.
+      // A user may only create their own profile, always as a student. Nobody
+      // proves they own their address, so staff are promoted by hand in the
+      // Firebase console, and isStaff() also needs an @alueducation.com email.
       allow create: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'reportsSubmitted', 'createdAt'])
         && nonEmptyString(request.resource.data.name, 100)
         && request.resource.data.email.lower() == tokenEmail()
         && request.resource.data.createdAt is timestamp
-        && (
-          (request.resource.data.role == 'student' && hasStudentEmail())
-          || (request.resource.data.role == 'staff' && hasStaffEmail())
-        );
+        && request.resource.data.role == 'student'
+        && (hasStudentEmail() || hasStaffEmail());
 
       // Only the display name can be changed. The role is fixed.
       allow update: if signedIn()
@@ -140,7 +137,7 @@ service cloud.firestore {
               || data.reporterName == 'Anonymous student');
       }
 
-      // Any verified member can file a report in their own name. New reports
+      // Any member can file a report in their own name. New reports
       // always start as "submitted".
       allow create: if isMember()
         && request.resource.data.keys().hasOnly([
@@ -201,7 +198,7 @@ service cloud.firestore {
           && nonEmptyString(request.resource.data.assignedToName, 100);
       }
 
-      // Any verified member can move upvoteCount by exactly one, and only in
+      // Any member can move upvoteCount by exactly one, and only in
       // the same transaction that creates or deletes their own vote document.
       function voteCountUpdate() {
         let voteDoc = /databases/$(database)/documents/incidents/$(incidentId)/votes/$(request.auth.uid);

@@ -7,7 +7,10 @@ import 'package:student_support/services/storage_service.dart';
 import 'package:student_support/utils/incident_labels.dart';
 
 void main() {
-  IncidentModel incident({String title = 'Broken tap', String location = 'Block A'}) {
+  IncidentModel incident({
+    String title = 'Broken tap',
+    String location = 'Block A',
+  }) {
     return IncidentModel(
       title: title,
       description: 'Water is leaking in the second floor bathroom',
@@ -55,9 +58,9 @@ void main() {
   });
 
   group('AuthService.roleForEmail', () {
-    test('maps each university domain to its role', () {
+    test('every university address starts as a student', () {
       expect(AuthService.roleForEmail('a@alustudent.com'), UserRole.student);
-      expect(AuthService.roleForEmail('B@ALUEDUCATION.COM'), UserRole.staff);
+      expect(AuthService.roleForEmail('B@ALUEDUCATION.COM'), UserRole.student);
     });
 
     test('rejects other domains', () {
@@ -78,6 +81,26 @@ void main() {
     });
   });
 
+  group('StorageService.pathFromUrl', () {
+    const base =
+        'https://example.supabase.co/storage/v1/object/public/incident-photos';
+
+    test('finds the path of a photo in the bucket', () {
+      expect(
+        StorageService.pathFromUrl('$base/incidents/uid1/123_0.jpg'),
+        'incidents/uid1/123_0.jpg',
+      );
+    });
+
+    test('ignores URLs from anywhere else', () {
+      expect(
+        StorageService.pathFromUrl('http://10.0.2.2:9199/v0/b/x/o/a.jpg'),
+        isNull,
+      );
+      expect(StorageService.pathFromUrl('$base/'), isNull);
+    });
+  });
+
   group('IncidentLabels', () {
     test('formats statuses and categories', () {
       expect(IncidentLabels.status('in_progress'), 'In Progress');
@@ -88,11 +111,17 @@ void main() {
       final now = DateTime(2026, 10, 23, 12);
       expect(IncidentLabels.relativeDate(now, now: now), 'Just now');
       expect(
-        IncidentLabels.relativeDate(now.subtract(const Duration(minutes: 5)), now: now),
+        IncidentLabels.relativeDate(
+          now.subtract(const Duration(minutes: 5)),
+          now: now,
+        ),
         '5m ago',
       );
       expect(
-        IncidentLabels.relativeDate(now.subtract(const Duration(hours: 3)), now: now),
+        IncidentLabels.relativeDate(
+          now.subtract(const Duration(hours: 3)),
+          now: now,
+        ),
         '3h ago',
       );
       expect(

@@ -22,8 +22,7 @@ class AuthService {
 
   bool _googleReady = false;
 
-  /// Emits on sign-in, sign-out and on profile changes such as a reload
-  /// after the user verifies their email.
+  /// Emits on sign-in, sign-out and on profile changes.
   Stream<User?> get userChanges => _auth.userChanges();
 
   User? get currentUser => _auth.currentUser;
@@ -33,11 +32,14 @@ class AuthService {
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) =>
       _firestore.collection('users').doc(uid);
 
-  /// Returns the role that matches the email domain, or null for any other
-  /// domain. Accounts outside the two university domains are not allowed.
+  /// Returns the role a new account starts with, or null for an email outside
+  /// the two university domains. Every account starts as a student, including
+  /// staff addresses: nobody has to prove they own the address, so staff
+  /// access is granted by hand in the Firestore console.
   static UserRole? roleForEmail(String email) {
-    if (AluEmail.isStaff(email)) return UserRole.staff;
-    if (AluEmail.isStudent(email)) return UserRole.student;
+    if (AluEmail.isStaff(email) || AluEmail.isStudent(email)) {
+      return UserRole.student;
+    }
     return null;
   }
 
@@ -75,8 +77,6 @@ class AuthService {
     // Updating the display name triggers userChanges, which makes the auth
     // provider re-read the profile document that now exists.
     await firebaseUser.updateDisplayName(user.name);
-
-    await _sendVerificationQuietly(firebaseUser);
 
     return credential;
   }
@@ -181,23 +181,6 @@ class AuthService {
     await _userDoc(userId).update({'name': name.trim()});
   }
 
-  Future<void> resendVerificationEmail() async {
-    final user = currentUser;
-    if (user == null) return;
-    await user.sendEmailVerification();
-  }
-
-  /// Reloads the user from Firebase and forces a fresh ID token, so the
-  /// security rules see the new email_verified value straight away.
-  Future<bool> refreshVerificationStatus() async {
-    final user = currentUser;
-    if (user == null) return false;
-    await user.reload();
-    final refreshed = _auth.currentUser;
-    await refreshed?.getIdToken(true);
-    return refreshed?.emailVerified ?? false;
-  }
-
   /// Creates the profile document if sign-up could not write it.
   Future<void> _ensureUserDocument(User firebaseUser) async {
     try {
@@ -215,15 +198,7 @@ class AuthService {
         ).toJson(),
       );
     } catch (e) {
-      debugPrint('Could not verify user document: $e');
-    }
-  }
-
-  Future<void> _sendVerificationQuietly(User user) async {
-    try {
-      await user.sendEmailVerification();
-    } catch (e) {
-      debugPrint('Could not send verification email: $e');
+      debugPrint('Could not create user document: $e');
     }
   }
 

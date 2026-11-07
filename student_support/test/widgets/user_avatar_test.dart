@@ -15,7 +15,11 @@ class _FakeAvatars implements AvatarService {
   Future<String?> fetchSvg(String userId) async => svg;
 }
 
-Widget _avatar(String? svg, {String userId = 'u1', String name = 'Ama Mensah'}) {
+Widget _avatar(
+  String? svg, {
+  String userId = 'u1',
+  String name = 'Ama Mensah',
+}) {
   return ProviderScope(
     overrides: [avatarServiceProvider.overrideWithValue(_FakeAvatars(svg))],
     child: MaterialApp(

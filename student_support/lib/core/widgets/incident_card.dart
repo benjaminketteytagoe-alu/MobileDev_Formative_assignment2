@@ -193,7 +193,11 @@ class IncidentCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
-        child: Icon(IncidentLabels.urgencyIcon(urgency), size: 12, color: color),
+        child: Icon(
+          IncidentLabels.urgencyIcon(urgency),
+          size: 12,
+          color: color,
+        ),
       ),
     );
   }

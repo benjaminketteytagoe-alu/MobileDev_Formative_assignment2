@@ -5,13 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app_assets.dart';
-import 'core/firebase_emulators.dart';
+import 'core/app_scroll_behavior.dart';
+import 'core/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'navigation/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/auth/verify_email_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/splash/splash_screen.dart';
 
@@ -21,16 +21,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Listed with the package licenses on the Open-source licenses page.
   LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks(
-      const ['DiceBear artwork'],
-      await rootBundle.loadString('assets/images/dicebear/LICENSE.txt'),
-    );
+    yield LicenseEntryWithLineBreaks(const [
+      'DiceBear artwork',
+    ], await rootBundle.loadString('assets/images/dicebear/LICENSE.txt'));
   });
   await Future.wait([
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     AppAssets.load(),
   ]);
-  await connectStorageEmulator();
+  await initializeSupabase();
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -56,6 +55,7 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       navigatorKey: _navigatorKey,
+      scrollBehavior: const AppScrollBehavior(),
       onGenerateRoute: AppRouter.onGenerateRoute,
       home: const AuthGate(),
     );
@@ -95,8 +95,6 @@ class _AuthGateState extends ConsumerState<AuthGate> {
       final auth = authState.valueOrNull;
       if (auth?.isAuthenticated != true) {
         child = const LoginScreen(key: ValueKey('login'));
-      } else if (auth!.needsEmailVerification) {
-        child = const VerifyEmailScreen(key: ValueKey('verify'));
       } else {
         child = const HomeScreen(key: ValueKey('home'));
       }

@@ -47,6 +47,7 @@ class IncidentModel {
   final String title;
   final String description;
   final String category;
+
   /// Human-readable place, e.g. "Leadership Centre · Room 204". Built from
   /// [sector] and the optional room/area the reporter typed.
   final String location;

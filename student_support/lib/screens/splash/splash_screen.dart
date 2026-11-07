@@ -57,76 +57,76 @@ class _SplashScreenState extends State<SplashScreen>
         children: [
           const _SplashBackground(),
           SafeArea(
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              FadeTransition(
-                opacity: _logoFade,
-                child: ScaleTransition(
-                  scale: _logoScale,
-                  child: const AppLogo(size: 132),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              FadeTransition(
-                opacity: _textFade,
-                child: SlideTransition(
-                  position: _textSlide,
-                  child: Column(
-                    children: [
-                      const Text(
-                        'CampusSupport',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Report it. Track it. Fixed.',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+                FadeTransition(
+                  opacity: _logoFade,
+                  child: ScaleTransition(
+                    scale: _logoScale,
+                    child: const AppLogo(size: 132),
                   ),
                 ),
-              ),
-              const Spacer(flex: 2),
-              FadeTransition(
-                opacity: _textFade,
-                child: const SizedBox(
-                  width: 120,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                    child: LinearProgressIndicator(
-                      minHeight: 4,
-                      backgroundColor: Color(0x33FFFFFF),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.aluGold,
+                const SizedBox(height: AppSpacing.lg),
+                FadeTransition(
+                  opacity: _textFade,
+                  child: SlideTransition(
+                    position: _textSlide,
+                    child: Column(
+                      children: [
+                        const Text(
+                          'CampusSupport',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Report it. Track it. Fixed.',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(flex: 2),
+                FadeTransition(
+                  opacity: _textFade,
+                  child: const SizedBox(
+                    width: 120,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                      child: LinearProgressIndicator(
+                        minHeight: 4,
+                        backgroundColor: Color(0x33FFFFFF),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.aluGold,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'AFRICAN LEADERSHIP UNIVERSITY',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.75),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2,
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'AFRICAN LEADERSHIP UNIVERSITY',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-            ],
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
-        ),
         ],
       ),
     );

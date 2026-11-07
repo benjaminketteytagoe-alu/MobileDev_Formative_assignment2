@@ -8,10 +8,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PremiumButton(
-              label: 'Test Button',
-              onTap: () {},
-            ),
+            body: PremiumButton(label: 'Test Button', onTap: () {}),
           ),
         ),
       );
@@ -25,10 +22,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PremiumButton(
-              label: 'Tap Me',
-              onTap: () => tapped = true,
-            ),
+            body: PremiumButton(label: 'Tap Me', onTap: () => tapped = true),
           ),
         ),
       );

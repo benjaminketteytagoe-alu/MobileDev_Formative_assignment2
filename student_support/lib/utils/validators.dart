@@ -27,7 +27,8 @@ class Validators {
   static bool isValidDomain(String? value) {
     if (value == null || value.isEmpty) return false;
     final lower = value.toLowerCase();
-    return lower.endsWith(AluEmail.studentDomain) || lower.endsWith(AluEmail.staffDomain);
+    return lower.endsWith(AluEmail.studentDomain) ||
+        lower.endsWith(AluEmail.staffDomain);
   }
 
   static String? required(String? value, [String? fieldName]) {

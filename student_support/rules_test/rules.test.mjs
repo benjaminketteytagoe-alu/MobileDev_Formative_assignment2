@@ -113,7 +113,7 @@ await check('count +2 in one go is rejected', assertFails(runTransaction(student
 await check('student unvotes: delete vote + count -1', assertSucceeds(vote(student, 'stu', -1)));
 
 // 3. Assign
-await check('verified staff assign a report to themselves',
+await check('staff assign a report to themselves',
   assertSucceeds(updateDoc(doc(staff, 'incidents/theirs'), { assignedTo: 'stf', assignedToName: 'Staff', updatedAt: now() })));
 await check('staff cannot assign to someone else',
   assertFails(updateDoc(doc(staff, 'incidents/theirs'), { assignedTo: 'x', assignedToName: 'X', updatedAt: now() })));
@@ -132,21 +132,25 @@ await check('staff cannot skip to resolved',
 await check('notification from staff',
   assertSucceeds(setDoc(doc(staff, 'notifications/n1'), { userId: 'oth', message: 'Your report "Leaking tap" is now In Review.', incidentId: 'theirs', read: false, at: now() })));
 
-// 5. Only verified ALU accounts get in
-await check('an unverified ALU account cannot read reports',
-  assertFails(getDoc(doc(unverified, 'incidents/theirs'))));
-await check('an unverified ALU account cannot file a report',
-  assertFails(setDoc(doc(collection(unverified, 'incidents')), incident('unv'))));
-await check('an outside account cannot read reports, even when verified',
+// 5. Only ALU accounts get in, and they do not need to confirm their email
+await check('an ALU account with an unconfirmed email can read reports',
+  assertSucceeds(getDoc(doc(unverified, 'incidents/theirs'))));
+await check('an ALU account with an unconfirmed email can file a report',
+  assertSucceeds(setDoc(doc(collection(unverified, 'incidents')), incident('unv'))));
+await check('an outside account cannot read reports, even with a confirmed email',
   assertFails(getDoc(doc(outsider, 'incidents/theirs'))));
 await check('an outside account cannot file a report',
   assertFails(setDoc(doc(collection(outsider, 'incidents')), incident('out'))));
-await check('an unverified user cannot read someone else\'s profile',
+await check('a student cannot read someone else\'s profile',
   assertFails(getDoc(doc(unverified, 'users/stu'))));
-await check('an unverified user can create their own profile',
+await check('a staff address cannot sign itself up as staff',
+  assertFails(setDoc(doc(env.authenticatedContext('nst', { email: 'nst@alueducation.com' }).firestore(), 'users/nst'), { name: 'New', email: 'nst@alueducation.com', role: 'staff', reportsSubmitted: 0, createdAt: now() })));
+await check('a staff address signs up as a student',
+  assertSucceeds(setDoc(doc(env.authenticatedContext('nst', { email: 'nst@alueducation.com' }).firestore(), 'users/nst'), { name: 'New', email: 'nst@alueducation.com', role: 'student', reportsSubmitted: 0, createdAt: now() })));
+await check('a staff address without the staff role cannot change a status',
+  assertFails(updateDoc(doc(env.authenticatedContext('nst', { email: 'nst@alueducation.com' }).firestore(), 'incidents/theirs'), { status: 'in_progress', updatedAt: now() })));
+await check('a new user can create their own profile',
   assertSucceeds(setDoc(doc(unverified, 'users/unv'), { name: 'Unv', email: 'unv@alustudent.com', role: 'student', reportsSubmitted: 0, createdAt: now() })));
-await check('unverified staff cannot change a status',
-  assertFails(updateDoc(doc(env.authenticatedContext('stf', { email: 'stf@alueducation.com', email_verified: false }).firestore(), 'incidents/theirs'), { status: 'in_progress', updatedAt: now() })));
 
 // 6. Anonymous reports
 await check('an anonymous report with the placeholder name is accepted',
@@ -205,14 +209,14 @@ await check('someone else\'s vote cannot be deleted alone',
 const image = new Uint8Array([255, 216, 255, 217]);
 const jpeg = { contentType: 'image/jpeg' };
 const photo = (ctx, path) => ref(ctx.storage(), path);
-await check('a verified student uploads to their own folder',
+await check('a student uploads to their own folder',
   assertSucceeds(uploadBytes(photo(studentCtx, 'incidents/stu/a.jpg'), image, jpeg)));
-await check('a verified member reads a photo',
+await check('a member reads a photo',
   assertSucceeds(getBytes(photo(staffCtx, 'incidents/stu/a.jpg'))));
 await check('nobody uploads into another user\'s folder',
   assertFails(uploadBytes(photo(studentCtx, 'incidents/oth/a.jpg'), image, jpeg)));
-await check('an unverified account cannot upload',
-  assertFails(uploadBytes(photo(unverifiedCtx, 'incidents/unv/a.jpg'), image, jpeg)));
+await check('an unconfirmed email can upload',
+  assertSucceeds(uploadBytes(photo(unverifiedCtx, 'incidents/unv/a.jpg'), image, jpeg)));
 await check('an outside account cannot read photos',
   assertFails(getBytes(photo(outsiderCtx, 'incidents/stu/a.jpg'))));
 await check('non-image uploads are rejected',

@@ -20,9 +20,15 @@ void main() {
     });
 
     test('location is built from sector and room, and split back', () {
-      final full = IncidentLabels.composeLocation('leadership_centre', ' Room 2 ');
+      final full = IncidentLabels.composeLocation(
+        'leadership_centre',
+        ' Room 2 ',
+      );
       expect(full, 'Leadership Centre · Room 2');
-      expect(IncidentLabels.locationDetail(full, 'leadership_centre'), 'Room 2');
+      expect(
+        IncidentLabels.locationDetail(full, 'leadership_centre'),
+        'Room 2',
+      );
 
       final bare = IncidentLabels.composeLocation('social_commons', '');
       expect(bare, 'Social Commons');

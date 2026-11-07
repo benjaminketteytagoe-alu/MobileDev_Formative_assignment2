@@ -27,8 +27,7 @@ class AnimatedSvgView extends StatelessWidget {
   static bool get isSupported => !kIsWeb && WebViewPlatform.instance != null;
 
   @visibleForTesting
-  static String htmlFor(String svg) =>
-      '''
+  static String htmlFor(String svg) => '''
 <!doctype html>
 <html><head>
 <meta charset="utf-8">
@@ -41,7 +40,9 @@ class AnimatedSvgView extends StatelessWidget {
   Widget build(BuildContext context) {
     // Hidden IndexedStack tabs have tickers off, so no animation runs unseen.
     final play =
-        isSupported && motionAllowed(context) && TickerMode.valuesOf(context).enabled;
+        isSupported &&
+        motionAllowed(context) &&
+        TickerMode.valuesOf(context).enabled;
     if (!play) return placeholder;
     return _SvgWebView(key: ValueKey(svg), svg: svg, placeholder: placeholder);
   }

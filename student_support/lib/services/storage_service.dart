@@ -1,28 +1,53 @@
 import 'dart:io';
 
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show FileOptions, StorageFileApi, Supabase;
+
+import '../core/supabase_config.dart';
+import '../utils/error_messages.dart';
 
 class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  static const String bucket = 'incident-photos';
 
-  /// Uploads [file] to [path] and returns its download URL.
-  /// The content type is set explicitly because the Storage rules only
-  /// accept image uploads.
+  StorageFileApi get _files {
+    if (!isSupabaseConfigured) {
+      throw const AppException(
+        'Photo storage is not set up in this build. '
+        'Run the app with --dart-define-from-file=supabase.env.json.',
+      );
+    }
+    return Supabase.instance.client.storage.from(bucket);
+  }
+
+  /// Uploads [file] to [path] and returns its public URL.
+  /// The content type is set explicitly because the bucket only accepts images.
   Future<String> uploadImage(File file, String path) async {
-    final ref = _storage.ref().child(path);
-    final snapshot = await ref.putFile(
+    final files = _files;
+    await files.upload(
+      path,
       file,
-      SettableMetadata(contentType: contentTypeFor(path)),
+      fileOptions: FileOptions(contentType: contentTypeFor(path)),
     );
-    return snapshot.ref.getDownloadURL();
+    return files.getPublicUrl(path);
   }
 
   Future<void> deleteImage(String url) async {
+    final path = pathFromUrl(url);
+    if (path == null) return;
     try {
-      await _storage.refFromURL(url).delete();
+      await _files.remove([path]);
     } catch (_) {
       // Best-effort cleanup. A leftover file is harmless.
     }
+  }
+
+  /// The path inside the bucket, or null for a URL from anywhere else.
+  static String? pathFromUrl(String url) {
+    const marker = '/storage/v1/object/public/$bucket/';
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.path.contains(marker)) return null;
+    final path = uri.path.substring(uri.path.indexOf(marker) + marker.length);
+    return path.isEmpty ? null : Uri.decodeComponent(path);
   }
 
   static String contentTypeFor(String path) {

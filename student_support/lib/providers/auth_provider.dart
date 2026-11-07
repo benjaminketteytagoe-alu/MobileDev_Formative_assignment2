@@ -8,38 +8,20 @@ enum AuthStatus { loading, authenticated, unauthenticated, error }
 class AuthState {
   final AuthStatus status;
   final UserModel? user;
-  final bool emailVerified;
   final String? error;
 
-  const AuthState({
-    this.status = AuthStatus.loading,
-    this.user,
-    this.emailVerified = false,
-    this.error,
-  });
+  const AuthState({this.status = AuthStatus.loading, this.user, this.error});
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
 
-  /// Staff tools need a verified staff email. The security rules apply the
-  /// same check, so this only controls what the UI shows.
-  bool get isStaff =>
-      isAuthenticated && user?.role == UserRole.staff && emailVerified;
+  /// The security rules apply the same check, so this only controls what the
+  /// UI shows.
+  bool get isStaff => isAuthenticated && user?.role == UserRole.staff;
 
-  /// An account that still has to confirm its ALU email address. Google
-  /// accounts arrive verified.
-  bool get needsEmailVerification =>
-      isAuthenticated && !emailVerified;
-
-  AuthState copyWith({
-    AuthStatus? status,
-    UserModel? user,
-    bool? emailVerified,
-    String? error,
-  }) {
+  AuthState copyWith({AuthStatus? status, UserModel? user, String? error}) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
-      emailVerified: emailVerified ?? this.emailVerified,
       error: error ?? this.error,
     );
   }
@@ -66,7 +48,6 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
     return AuthState(
       status: AuthStatus.authenticated,
       user: profile ?? UserModel.fromFirebaseUser(firebaseUser),
-      emailVerified: firebaseUser.emailVerified,
     );
   });
 });

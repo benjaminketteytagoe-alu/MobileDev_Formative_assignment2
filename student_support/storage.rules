@@ -1,22 +1,18 @@
 rules_version = '2';
 
 // Incident photos are stored under incidents/{uid}/{fileName}.
-// Only verified ALU accounts can read or upload, each into their own folder,
+// Only ALU accounts can read or upload, each into their own folder,
 // and only images up to 5 MB. firestore.rules holds the same two domains.
 service firebase.storage {
   match /b/{bucket}/o {
-    function verifiedEmail() {
-      return request.auth != null && request.auth.token.email_verified == true;
-    }
-
-    function isVerifiedStaff() {
-      return verifiedEmail()
+    function isStaff() {
+      return request.auth != null
         && request.auth.token.email.lower().matches('.*@alueducation[.]com');
     }
 
     function isMember() {
-      return isVerifiedStaff()
-        || (verifiedEmail()
+      return isStaff()
+        || (request.auth != null
             && request.auth.token.email.lower().matches('.*@alustudent[.]com'));
     }
 
@@ -30,7 +26,7 @@ service firebase.storage {
 
       // Lets the app clean up after a failed submission, and lets staff remove
       // photos when they delete a report.
-      allow delete: if (isMember() && request.auth.uid == uid) || isVerifiedStaff();
+      allow delete: if (isMember() && request.auth.uid == uid) || isStaff();
     }
 
     match /{allPaths=**} {

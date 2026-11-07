@@ -73,7 +73,9 @@ final incidentsProvider = Provider.autoDispose
           .watch(_incidentQueryProvider(scope))
           .whenData(
             (incidents) => incidents
-                .where((incident) => sector.isEmpty || incident.sector == sector)
+                .where(
+                  (incident) => sector.isEmpty || incident.sector == sector,
+                )
                 .where((incident) => incident.matchesQuery(search))
                 .toList(),
           );

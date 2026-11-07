@@ -33,8 +33,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
-  /// 'student', 'staff', or null until the email has an ALU domain. The
-  /// role always follows the email, so there is nothing for the user to pick.
+  /// 'student', 'staff', or null until the email has an ALU domain. Only
+  /// changes the hint: every new account starts as a student.
   String? _detectedRole;
 
   @override
@@ -225,8 +225,8 @@ class _RoleBadge extends StatelessWidget {
           Expanded(
             child: Text(
               isStaff
-                  ? 'Staff account. We will email you a verification link; '
-                        'staff tools unlock after you open it.'
+                  ? 'Staff email. The account starts as a student until an '
+                        'administrator grants staff access.'
                   : 'Student account.',
               style: context.text.caption.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,

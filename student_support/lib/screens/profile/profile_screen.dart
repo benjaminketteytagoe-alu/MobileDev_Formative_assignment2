@@ -219,7 +219,9 @@ class _NotificationsSection extends ConsumerWidget {
             if (notifications.isEmpty) {
               return Text(
                 'No notifications yet.',
-                style: context.text.body.copyWith(color: context.palette.textHint),
+                style: context.text.body.copyWith(
+                  color: context.palette.textHint,
+                ),
               );
             }
             return ListView.separated(

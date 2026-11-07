@@ -30,7 +30,9 @@ class StatusTimelineWidget extends ConsumerWidget {
             if (entries.isEmpty) {
               return Text(
                 'No status changes yet.',
-                style: context.text.body.copyWith(color: context.palette.textHint),
+                style: context.text.body.copyWith(
+                  color: context.palette.textHint,
+                ),
               );
             }
             return ListView.separated(

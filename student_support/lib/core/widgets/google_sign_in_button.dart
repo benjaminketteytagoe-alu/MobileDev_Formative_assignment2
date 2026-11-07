@@ -59,7 +59,9 @@ class _GoogleSignInButtonState extends ConsumerState<GoogleSignInButton> {
       child: OutlinedButton(
         onPressed: _isLoading ? null : _signIn,
         style: OutlinedButton.styleFrom(
-          backgroundColor: isDark ? AppColors.darkSurface : context.palette.surface,
+          backgroundColor: isDark
+              ? AppColors.darkSurface
+              : context.palette.surface,
           foregroundColor: isDark
               ? AppColors.darkTextPrimary
               : context.palette.textPrimary,

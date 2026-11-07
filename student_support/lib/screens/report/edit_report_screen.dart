@@ -148,7 +148,9 @@ class _EditReportScreenState extends ConsumerState<EditReportScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Discard your changes?'),
-          content: const Text('The report stays as it was before you edited it.'),
+          content: const Text(
+            'The report stays as it was before you edited it.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),

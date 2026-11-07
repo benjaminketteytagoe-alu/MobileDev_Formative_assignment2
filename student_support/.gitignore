@@ -54,3 +54,6 @@ firebase-debug.log
 
 # Photos stored by the local Storage emulator
 .emulator-data/
+
+# Supabase project settings, passed with --dart-define-from-file
+supabase.env.json

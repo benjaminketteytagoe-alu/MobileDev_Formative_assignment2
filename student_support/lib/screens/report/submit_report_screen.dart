@@ -316,7 +316,8 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
                   _padded(
                     PremiumTextField(
                       controller: _descriptionController,
-                      hintText: 'What is wrong, since when, and who is affected?',
+                      hintText:
+                          'What is wrong, since when, and who is affected?',
                       labelText: 'Description',
                       prefixIcon: const Icon(Icons.description_outlined),
                       maxLines: 4,
@@ -336,15 +337,12 @@ class _SubmitReportScreenState extends ConsumerState<SubmitReportScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  _SectionLabel(
-                    'Photos (optional, up to $maxPhotosPerReport)',
-                  ),
+                  _SectionLabel('Photos (optional, up to $maxPhotosPerReport)'),
                   _padded(
                     PhotoAttachments(
                       paths: _imagePaths,
                       maxCount: maxPhotosPerReport,
-                      onChanged: (paths) =>
-                          setState(() => _imagePaths = paths),
+                      onChanged: (paths) => setState(() => _imagePaths = paths),
                     ),
                   ),
 

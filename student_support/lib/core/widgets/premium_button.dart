@@ -57,49 +57,49 @@ class _PremiumButtonState extends State<PremiumButton> {
       label: widget.label,
       excludeSemantics: true,
       child: GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      onTap: widget.isLoading ? null : widget.onTap,
-      child: AnimatedScale(
-        scale: scale,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.md,
-            horizontal: AppSpacing.lg,
-          ),
-          decoration: BoxDecoration(
-            gradient: widget.isOutlined
-                ? null
-                : widget.gradient ?? AppColors.primaryGradient,
-            border: widget.isOutlined
-                ? Border.all(color: outline, width: 2)
-                : null,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            boxShadow: widget.isOutlined ? null : AppShadows.buttonShadow,
-          ),
-          child: widget.isLoading
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      widget.isOutlined ? outline : Colors.white,
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        onTap: widget.isLoading ? null : widget.onTap,
+        child: AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 150),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.md,
+              horizontal: AppSpacing.lg,
+            ),
+            decoration: BoxDecoration(
+              gradient: widget.isOutlined
+                  ? null
+                  : widget.gradient ?? AppColors.primaryGradient,
+              border: widget.isOutlined
+                  ? Border.all(color: outline, width: 2)
+                  : null,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              boxShadow: widget.isOutlined ? null : AppShadows.buttonShadow,
+            ),
+            child: widget.isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        widget.isOutlined ? outline : Colors.white,
+                      ),
                     ),
+                  )
+                : Text(
+                    widget.label,
+                    style: widget.isOutlined
+                        ? AppTextStyles.button.copyWith(color: outline)
+                        : AppTextStyles.button,
+                    textAlign: TextAlign.center,
                   ),
-                )
-              : Text(
-                  widget.label,
-                  style: widget.isOutlined
-                      ? AppTextStyles.button.copyWith(color: outline)
-                      : AppTextStyles.button,
-                  textAlign: TextAlign.center,
-                ),
+          ),
         ),
-      ),
       ),
     );
   }

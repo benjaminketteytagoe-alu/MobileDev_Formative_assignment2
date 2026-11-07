@@ -2,19 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:student_support/core/widgets/user_avatar.dart';
-import 'package:student_support/main.dart';
 import 'package:student_support/models/incident_model.dart';
 import 'package:student_support/models/user_model.dart';
 import 'package:student_support/providers/auth_provider.dart';
 import 'package:student_support/providers/incident_provider.dart';
 import 'package:student_support/screens/detail/incident_detail_screen.dart';
-import 'package:student_support/screens/home/home_screen.dart';
 import 'package:student_support/screens/staff/staff_dashboard_screen.dart';
 
-AuthState _signedIn(UserRole role, {bool verified = true}) => AuthState(
+AuthState _signedIn(UserRole role) => AuthState(
   status: AuthStatus.authenticated,
   user: UserModel(id: 'u1', name: 'Test', email: 'test@x.com', role: role),
-  emailVerified: verified,
 );
 
 Widget _app(Widget child, AuthState auth, {List<Override> extra = const []}) {
@@ -54,33 +51,6 @@ void main() {
     await tester.pump();
     expect(find.text('Staff access only'), findsOneWidget);
   });
-
-  testWidgets('unverified staff cannot open the staff dashboard', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _app(
-        const StaffDashboardScreen(),
-        _signedIn(UserRole.staff, verified: false),
-      ),
-    );
-    await tester.pump();
-    expect(find.text('Staff access only'), findsOneWidget);
-  });
-
-  for (final role in UserRole.values) {
-    testWidgets('an unverified ${role.name} sees only the verify screen', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _app(const AuthGate(), _signedIn(role, verified: false)),
-      );
-      await tester.pump(AuthGate.minSplash);
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text('Verify your ALU email'), findsOneWidget);
-      expect(find.byType(HomeScreen), findsNothing);
-    });
-  }
 
   testWidgets('an anonymous report hides the name and avatar', (tester) async {
     final anonymous = incident.copyWith(
@@ -154,7 +124,7 @@ void main() {
     expect(find.text('Update Status'), findsNothing);
   });
 
-  testWidgets('verified staff see status controls on a report', (tester) async {
+  testWidgets('staff see status controls on a report', (tester) async {
     await tester.pumpWidget(
       _app(
         const IncidentDetailScreen(incidentId: 'i1'),

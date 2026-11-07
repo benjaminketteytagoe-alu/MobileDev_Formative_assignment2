@@ -33,9 +33,16 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            illustration ?? PopIn(child: Icon(icon, size: 64, color: context.palette.textHint)),
+            illustration ??
+                PopIn(
+                  child: Icon(icon, size: 64, color: context.palette.textHint),
+                ),
             const SizedBox(height: AppSpacing.md),
-            Text(title, style: context.text.heading, textAlign: TextAlign.center),
+            Text(
+              title,
+              style: context.text.heading,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,

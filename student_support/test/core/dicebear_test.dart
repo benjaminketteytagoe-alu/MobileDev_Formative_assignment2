@@ -21,10 +21,7 @@ void main() {
 
     test('the same user always gets the same avatar', () {
       expect(DiceBear.avatarUrl('uid-1'), DiceBear.avatarUrl('uid-1'));
-      expect(
-        DiceBear.seedFor('uid-1'),
-        isNot(DiceBear.seedFor('uid-2')),
-      );
+      expect(DiceBear.seedFor('uid-1'), isNot(DiceBear.seedFor('uid-2')));
     });
 
     test('never sends the user id to DiceBear', () {

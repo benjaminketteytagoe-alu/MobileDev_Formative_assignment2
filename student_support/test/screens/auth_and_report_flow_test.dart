@@ -41,7 +41,10 @@ final _student = AuthState(
 void main() {
   group('auth screens', () {
     Widget app(Widget home) => ProviderScope(
-      child: MaterialApp(home: home, onGenerateRoute: AppRouter.onGenerateRoute),
+      child: MaterialApp(
+        home: home,
+        onGenerateRoute: AppRouter.onGenerateRoute,
+      ),
     );
 
     testWidgets('login offers Google and email/password sign-in', (
@@ -54,9 +57,7 @@ void main() {
       expect(find.text('Forgot password?'), findsOneWidget);
     });
 
-    testWidgets('forgot password carries the typed email over', (
-      tester,
-    ) async {
+    testWidgets('forgot password carries the typed email over', (tester) async {
       await tester.pumpWidget(app(const LoginScreen()));
       await tester.enterText(
         find.widgetWithText(TextFormField, 'ALU email'),
@@ -78,7 +79,7 @@ void main() {
         'kofi@alueducation.com',
       );
       await tester.pump();
-      expect(find.textContaining('Staff account'), findsOneWidget);
+      expect(find.textContaining('starts as a student'), findsOneWidget);
     });
 
     testWidgets('sign up rejects non-ALU email addresses', (tester) async {
